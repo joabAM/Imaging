@@ -1,0 +1,37 @@
+#Configuration File
+#The arguments are set below 
+
+[Required]
+dpath = /home
+ppath = /work
+year = 2011
+doy = 125
+enaproc = True
+enagen = True
+
+[Optional]
+hour = 
+minute = 
+dbrange = 0,30
+heirange = 200,900
+online =
+
+[ImageProcessing]
+set = 
+label =
+navg = 2
+nbavg = 1
+factoravg = 0.75
+snrth = 0.5
+nthreads =
+calibrationfile = 
+
+[ImageGeneration]
+show = 1
+save = 1
+filter = 0
+beamfilter = 0
+plotrti = True
+plotspec = True
+dcosxrange = -0.2, 0.2
+dcosyrange = -0.02, 0.02

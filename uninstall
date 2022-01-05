@@ -1,0 +1,59 @@
+#!/bin/sh
+# This script installs the Imaging software.
+#
+#
+echo "********** removing imagc**********"
+cd source/imagc
+make cleanall
+cd ../../
+
+echo "********** removing libraries**********"
+cd lib
+rm -rf *
+cd ../
+
+cd source
+echo " "
+echo "********** removing cminpack library **********"
+echo " "
+cd imagc/cminpack
+cd cminpack-1.1.3
+
+make clean
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+
+cd ..
+cd ../..
+
+
+echo " "
+echo "********** removing lapack and blas libraries **********"
+echo " "
+cd imagf/lapack
+cd lapack-3.3.0
+
+make cleanlib
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+
+cd ..
+cd ../..
+
+echo " "
+echo "************* Removing Python library ****************"
+echo " "
+echo "Cleaning old build directory"
+python setup.py clean --all
+
+sudo rm /usr/local/bin/procImaging
+sudo rm /usr/local/bin/calibrateImaging
+cd ..
+
+echo " "
+echo "********** All packages were removed **********"
+echo " "

@@ -1,0 +1,39 @@
+# Prerequisites
+*.d
+
+#
+bin/
+source/build/
+source/dist/
+source/imagpy.egg-info
+source/imagf/lapack/lapack-3.3.0/
+include/*.h
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app

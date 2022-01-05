@@ -1,0 +1,20 @@
+This program processes hdf5 files with image data and generates Images and Movies.
+
+#REQUIRED LIBRARIES
+
+You should install the next libraries before you run getImaging.py
+
+-h5py [gcc, hdf5] 
+-plplot
+-numpy
+-scipy
+-mencoder
+
+To run it:
+
+>> cd imagpy
+>> python getImaging.py --dpath=/users/myuser/data/BINFILES --ppath=/users/myuser/temp --startYear=2010 --startDoy=364 \
+    --startHour=20 --endHour=23 --mindB=0 --maxdB=30
+
+Developed by Miguel Urco
+Jicamarca Radio Observatory

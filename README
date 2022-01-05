@@ -1,0 +1,64 @@
+HOW TO INSTALL IMAGING
+----------------------
+
+#REQUIRED LIBRARIES
+
+You should install the following libraries before you run "installImaging"
+
+-h5py [gcc, hdf5] 
+-plplot
+-numpy
+-scipy
+-mencoder
+
+1. Create a directory name "Imaging"
+2. Copy the imaging_vX.X.tar.gz into the "Imaging" directory
+3. untar imaging_vX.X.tar.gz:
+	
+	[roj@localhost ~]$ tar -xzvf imaging_vX.X.tar.gz
+	
+
+4. run:
+
+	[roj@localhost ~]$ ./installImaging
+
+5. To add more shared memory to the operative system to execute the next command as root.
+
+Linux:
+
+[root@localhost imagroot]# sudo echo "1569054976" >/proc/sys/kernel/shmmax
+[root@localhost imagroot]# sudo echo "1569054976" >/proc/sys/kernel/shmall
+
+Mac:
+
+[imagroot]$ sudo sysctl -w kern.sysv.shmall=62914560
+[imagroot]$ sudo sysctl -w kern.sysv.shmmax=62914560
+
+HOW TO RUN THE IMAGING PROGRAM
+------------------------------
+
+
+1. Copy the imaging.ini.template file to imaging.ini
+2. Edit the imaging.ini file with the parameters wanted
+3. run:
+
+Alternative 1:
+
+	[roj@localhost ~]$ python batch_imaging.py [iniFile=imaging.ini]
+
+Alternative 2:
+
+#proccesing pdata files
+[hostname]$ procImaging --dpath=/home/roj-idl71/Data/RAWDATA/TWILIGHT \
+		--ppath=/home/roj-idl71/Data/PROCDATA/TWILIGHT/BIN_FILES
+		--start-year=2003 --end-year=2003 --start-doy=323 --end-doy=323 \
+		--start-hour=18 --end-hour=19 --start-min=0 --end-min=59 \
+		--navg=10 --nbavg=2 --factor-avg=0.75
+
+
+#gerating png files
+	[hostname]$ genImagPlots.py --help (enter)
+	[hostname]$ genImagPlots.py --dpath=/PATH/TO/DATA --ppath=/GPATH --startYear=2015 --startDoy=160 \
+				--mindB=5 --maxdB=35 \
+				--show --save  --filter --plot_xcut --plot_ycut --plot_hcut --plot_avg \
+				--mindcosx=-0.3 --maxdcosx=0.3 --mindcosy=-0.3 --maxdcosy=0.3 --minhei=81 --maxhei=86

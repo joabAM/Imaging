@@ -1,0 +1,11 @@
+procImaging --dpath=/media/soporte/E9F4-F053/JULIAImaging/PDATA --ppath=/media/soporte/E9F4-F053/JULIAImaging/with_hydra3 --start-year=2016 --start-doy=99 --start-hour=19 --end-hour=21.5 --min-hei=150 --max-hei=700 --config-file=/home/soporte/Documents/Imaging/config-files/2016_04_calib_hydra.txt
+
+
+genImagPlots.py --dpath=/media/soporte/E9F4-F053/JULIAImaging/with_hydra2 --ppath=/media/soporte/E9F4-F053/JULIAImaging/with_hydra2  --start-year=2016 --start-doy=98 --start-hour=19 --nbins=8 --min-hei=100 --max-hei=700  --save=1 --filter --fft-shift --min-dcosy=-0.05 --max-dcosy=0.05
+
+
+
+AMISR:
+ ssh -i /home/soporte/.ssh/id_rsa-umetops.txt umetops@10.10.40.121 -L 4901/localhost/80 -L 3950/dtc0/5900 -L 3951/CI-56/5900
+
+

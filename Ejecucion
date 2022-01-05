@@ -1,0 +1,55 @@
+navg = Incoherent integrations. By default is 1
+nbavg = Beam integrations. By default is 1
+startHour,startMin: Start time to process. By default is [00,00]\n"
+endHour, endMin:
+
+procImaging --dpath=/home/joab/Documents/Imaging/PDATA --ppath=/home/joab/Documents/Imaging/OUTPUTs --start-year=2009 --start-doy=308 --start-hour=19 --end-hour=23 --min-hei=200 --max-hei=700 --navg=2 --config-file=config20093082D.txt
+
+
+procImaging --dpath=/home/soporte/Documentos/Imaging/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2009 --start-doy=309 --start-hour=19 --navg=10 --nbavg=2 --factor-avg=0.75 --config-file=calibration.txt
+
+genImagPlots.py --dpath=/home/joab/Documents/Imaging/OUTPUTs --ppath=/home/joab/Documents/Imaging/OUTPUTs --start-year=2009 --start-doy=308 --start-hour=19  --min-hei=100 --max-hei=700  --save=1 --filter --fft-shift --min-dcosy=-0.05 --max-dcosy=0.05
+
+genImagPlots.py --dpath=/home/joab/Documents/Imaging/OUTPUTs --ppath=/home/joab/Documents/Imaging/OUTPUTs --start-year=2014 --start-doy=232 --start-hour=20 --nbins=8 --min-hei=100 --max-hei=500  --save=1 --filter --fft-shift --min-dcosy=-0.05 --max-dcosy=0.05
+
+genImagPlots.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTs --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2009 --start-doy=311 --start-hour=19  --min-hei=100 --max-hei=750 --show=1  --save=1 --filter --fft-shift --maxdB=25 
+
+calibrateImaging --dpath=/home/soporte/Documentos/Imaging/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2009 --start-doy=308 --start-hour=21 --start-min=20 --end-hour=24 --channels=0,2 --min-hei=660 --max-hei=700 --config-file=config20093082D_1.txt --cal-phase-step=0.01 --cal-nsteps=10 
+
+calibrateImaging --dpath=/home/soporte/Documentos/Imaging/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2009  --start-doy=308 --start-hour=20 --end-hour=24 --channels=0,2 --min-hei=300 --max-hei=400  --config-file=calibration.txt --cal-phase-step=0.01 --cal-nsteps=60 --cal-channel=1 
+
+
+calibrateImaging --dpath=/home/joab/Documents/Imaging/DATA --ppath=/home/joab/Documents/Imaging/OUTPUTs --start-year=2009 --start-doy=308 --start-hour=21 --start-min=20 --end-hour=24 --channels=0,2 --min-hei=660 --max-hei=700 --config-file=config20093082D.txt --cal-phase-step=0.01 --cal-nsteps=10
+
+calibrateImaging --dpath=/home/joab/Documents/Imaging/DATA --ppath=/home/joab/Documents/Imaging/OUTPUTs --start-year=2009 --start-doy=308 --start-hour=21 --start-min=20 --end-hour=24 --channels=0,1,2 --min-hei=660 --max-hei=700  --cal-channel=1 --cal-phase-step=0.01
+
+procImaging --dpath=/home/soporte/Documentos/Imaging/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2009 --start-doy=311 --start-hour=19 --navg=10 --nbavg=2 --factor-avg=0.75 --config-file=_config2009311.txt  
+
+
+ genImagCuts.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTs/ --ppath=/home/soporte/Documentos/Imaging/OUTPUTs/ --start-year=2009 --start-doy=315 --start-hour=20 --end-hour=24  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
+
+************************************************************************
+
+calibrateImaging --dpath=/media/soporte/DATA/IMAGING/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUT --start-year=2019 --start-doy=323 --start-hour=21 --start-min=0 --end-hour=24 --channels=0,2 --min-hei=400 --max-hei=700 --config-file=calibration.txt
+
+procImaging --dpath=/media/soporte/DATA/IMAGING/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUT --start-year=2019 --start-doy=323 --start-hour=21  --navg=10  --config-file=calibration.txt
+
+ genImagCuts.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTs/ --ppath=/home/soporte/Documentos/Imaging/OUTPUT/ --start-year=2019 --start-doy=5 --start-hour=21 --end-hour=24  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
+
+************************************
+
+scp -r operaciones@10.10.20.9:/puma80/Operaciones/DATA-Operaciones/JULIA_EW_IMAGING/IMAGING/PDATA/D2019/d2019325 /media/soporte/DATA/IMAGING/PDATA
+
+
+
+procImaging --dpath=/media/soporte/DATA/IMAGING/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2019 --start-doy=306 --start-hour=18  --navg=10  --config-file=_config2019306.txt --procKey=45
+
+procImaging --dpath=/media/soporte/DATA/IMAGING/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2019 --start-doy=307 --start-hour=0 --end-hour=05 --navg=10 --config-file=_config2019306.txt --procKey=50
+
+genImagPlots.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --ppath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --start-year=2019 --start-doy=304 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1
+
+genImagPlots.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --ppath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --start-year=2019 --start-doy=324 --start-hour=18 --start-min=10 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750 --save=1 --filter --fft-shift --std-plot=1 --plot-spec=0 --maxdB=35
+
+
+
+

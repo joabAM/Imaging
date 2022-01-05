@@ -1,0 +1,139 @@
+#!/bin/sh
+# This script installs the Imaging software.
+#
+#
+
+# Compile the Libraries and Programs
+# ----------------------------------
+
+export IMAGROOT=$PWD
+mkdir bin
+if [ $? -ne 0 ]
+then
+    rm -rf ./bin/*
+fi
+
+cd source
+echo " "
+echo "********** installing cminpack library **********"
+echo " "
+cd imagc/cminpack
+echo "Unpacking cminpack"
+tar -xf cminpack-1.1.3.tar.gz
+cd cminpack-1.1.3
+
+make
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+cp libminpack.a $IMAGROOT/lib/
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+chmod 644 $IMAGROOT/lib/libminpack.a
+cp minpack.h $IMAGROOT/include/
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+chmod 644 $IMAGROOT/include/minpack.h
+cp cminpack.h $IMAGROOT/include/
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+chmod 644 $IMAGROOT/include/cminpack.h
+
+cd ..
+#rm -r cminpack-1.1.3
+cd ../..
+
+
+#if [ "` uname -s`" = "Other" ]; then
+
+echo " "
+echo "********** installing lapack and blas libraries **********"
+echo " "
+cd imagf/lapack
+
+tar -xf lapack-3.3.0.tgz
+cd lapack-3.3.0
+cp  make.inc.example make.inc
+
+echo " "
+echo "********** installing lapack library **********"
+echo " "
+make lapacklib
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+cp lapack*.a liblapack.a
+cp liblapack.a $IMAGROOT/lib
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+echo " "
+echo "********** installing blas library **********"
+echo " "
+make blaslib
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+cp blas*.a libblas.a
+cp libblas.a $IMAGROOT/lib
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+cd ../../..
+
+#fi
+
+echo " "
+echo "***********************************************"
+echo "********** Installing Imaging library**********"
+echo " "
+
+
+echo " "
+echo "*************** C library ********************"
+echo " "
+cd imagc
+#make all
+#if [ $? -ne 0 ]
+#then
+#    exit -1
+#fi
+
+make install
+if [ $? -ne 0 ]
+then
+    exit -1
+fi
+
+#make clean
+#if [ $? -ne 0 ]
+#then
+#    exit -1
+#fi
+
+cd ../
+
+echo " "
+echo "************* Python library ****************"
+echo " "
+echo "Cleaning old build directory"
+python setup.py clean --all
+
+echo " "
+echo "Installing python package"
+python setup.py install
+
+echo " "
+echo "Installation finished"
+echo " "
