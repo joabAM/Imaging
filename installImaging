@@ -128,11 +128,11 @@ echo " "
 echo "************* Python library ****************"
 echo " "
 echo "Cleaning old build directory"
-python setup.py clean --all
+python2 setup.py clean --all
 
 echo " "
 echo "Installing python package"
-python setup.py install
+python2 setup.py install
 
 echo " "
 echo "Installation finished"

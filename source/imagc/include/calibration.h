@@ -66,7 +66,8 @@ class Ccalibration{
 		void nextSequence();
 		int isTheLastChannel();
 		void addPhasePower(float phase, float **image, int nx, int ny);
-	  void addPhasePower2(float phase, float **image, int nx, int ny);
+	  	void addPhasePower2(float phase, float **image, int nx, int ny);
+		float getOptFunction(float** array, int nFFTPoints, int nHeis, int nx, int ny);
 		float estimatePhase();
 		float getDispIndx(float **image, int n, int m, int pos);
 		void printEstimatedPhases();

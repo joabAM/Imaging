@@ -8,14 +8,14 @@ ry=127.5, 91.5, 91.5, 55.5, -19.5, -127.5, -127.5, -322.294
 rz=0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 #Processing parameters
 #256 a 16, 0.1 a 0.1
-npoints x=64
-npoints y=32
+npoints x=128
+npoints y=4
 # Max values in direction cosines
-Max x=0.2
-Max y=0.1
+Max x=0.85
+Max y=0.01
 # Rot angle in degrees, offset in direction cosine
 Angle of rotation=51.3
-Dcosy offset=0.00
+Dcosy offset=-0.0
 # range in kms
 #proc range=50, 930
 #beacon range=940.0, 980.0

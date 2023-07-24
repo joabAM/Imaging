@@ -28,9 +28,10 @@ setup(name="imagpy",
                     'imagpy.genImagPlots'],
         package_data={},
         scripts =['imagpy/genImagCuts.py', 'imagpy/genImagPlots.py'],
-        install_requires=["numpy >= 1.6.0",
-#                           "plplot >= 5.9.0"
-                          "scipy >= 0.11.0",
-                          "h5py >= 2.0.1"
+        install_requires=["numpy >= 1.6.0, <= 1.16.6",
+  #                         "plplot >= 5.9.0",
+                          "scipy >= 0.11.0, <1.0.0",
+                          "h5py >= 2.0.1, <=2.8.0",
+                          "setuptools <= 38.2.5",
                           ],
       )

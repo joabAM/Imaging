@@ -514,7 +514,7 @@ int CpdataRead::setFilename(){
 			printf("There are no files in the directory %s with %s extension\n",tmppath, extension);
 			return(-1);
 		}
-
+		
 		strcpy(tmpset,tmpfile+8);
 		ss = atoi(tmpset);
 	}

@@ -1,0 +1,73 @@
+sudo apt -y install python2-minimal
+sudo apt-get -y install python-dev
+
+sudo apt update 
+sudo apt install curl 
+curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output get-pip.py
+sudo python2 get-pip.py
+
+pip2 install h5py==2.10.0  numpy scipy setuptools 
+
+
+sudo apt-get install plplot-driver-cairo
+sudo apt-get install python-cairo
+
+pip2 install Cython
+pip2 install version-utils
+pip2 install matplotlib
+apt-get install python-tk
+pip2 install swig
+
+
+#############################################################################################
+#############################################################################################
+git clone git://git.code.sf.net/p/plplot/plplot plplot.git
+mkdir build_dir
+cd build_dir
+go to python.cmake-> change option(FORCE_PYTHON2 "Force Python2 even when Python 3 is present" OFF) to ON
+cmake -DCMAKE_INSTALL_PREFIX=/usr/local \
+../ >& cmake.out
+
+make VERBOSE=1 >& make.out
+sudo make VERBOSE=1 install >& make_install.out
+#############################################################################################
+#############################################################################################
+
+
+## Install dependencies
+sudo apt -y install build-essential checkinstall cmake pkg-config yasm
+sudo apt -y install git gfortran
+
+ 
+sudo apt -y install libtiff5-dev
+ 
+sudo apt -y install libtiff-dev
+ 
+sudo apt -y install libavcodec-dev libavformat-dev libswscale-dev libdc1394-22-dev
+sudo apt -y install libxine2-dev libv4l-dev
+cd /usr/include/linux
+sudo ln -s -f ../libv4l1-videodev.h videodev.h
+cd $cwd
+ 
+
+sudo apt -y install libgtk2.0-dev libtbb-dev qt5-default
+sudo apt -y install libatlas-base-dev
+sudo apt -y install libfaac-dev libmp3lame-dev libtheora-dev
+sudo apt -y install libvorbis-dev libxvidcore-dev
+sudo apt -y install libopencore-amrnb-dev libopencore-amrwb-dev
+sudo apt -y install libavresample-dev
+sudo apt -y install x264 v4l-utils
+ 
+# Optional dependencies
+#sudo apt -y install libprotobuf-dev protobuf-compiler
+#sudo apt -y install libgoogle-glog-dev libgflags-dev
+sudo apt -y install libgphoto2-dev libeigen3-dev libhdf5-dev doxygen
+
+
+
+sudo apt install libopencv-dev python3-opencv
+
+
+
+
+

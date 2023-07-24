@@ -39,7 +39,7 @@ procImaging --dpath=/media/soporte/DATA/IMAGING/PDATA --ppath=/home/soporte/Docu
 ************************************
 
 scp -r operaciones@10.10.20.9:/puma80/Operaciones/DATA-Operaciones/JULIA_EW_IMAGING/IMAGING/PDATA/D2019/d2019325 /media/soporte/DATA/IMAGING/PDATA
-
+pass: mst2010vhf
 
 
 procImaging --dpath=/media/soporte/DATA/IMAGING/PDATA --ppath=/home/soporte/Documentos/Imaging/OUTPUTs --start-year=2019 --start-doy=306 --start-hour=18  --navg=10  --config-file=_config2019306.txt --procKey=45
@@ -49,6 +49,21 @@ procImaging --dpath=/media/soporte/DATA/IMAGING/PDATA --ppath=/home/soporte/Docu
 genImagPlots.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --ppath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --start-year=2019 --start-doy=304 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1
 
 genImagPlots.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --ppath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --start-year=2019 --start-doy=324 --start-hour=18 --start-min=10 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750 --save=1 --filter --fft-shift --std-plot=1 --plot-spec=0 --maxdB=35
+
+
+
+
+
+calibrateImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --start-min=30 --end-hour=24 --channels=0,1,2 --min-hei=200 --max-hei=400 --config-file=calibration.txt
+
+genImagCuts.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=21  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
+
+genImagPlots.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data  --start-year=2019 --start-doy=304 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1
+
+procImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imaging/h5data --start-year=2010 --start-doy=2 --start-hour=18  --navg=10  --config-file=_config2010002.txt --procKey=45
+
+
+
 
 
 

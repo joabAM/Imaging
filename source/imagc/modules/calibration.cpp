@@ -269,15 +269,14 @@ float Ccalibration::__getPower(float **image, int nx, int ny) {
 void Ccalibration::__getPower2(float **image, int heights, int len) {
 	// TODO Auto-generated constructor stub
 
-	float minValue = 0;
 
 	if (this->initialized){
-		for(int n=0; n< this->ny; n++){
+		for(UINT n=0; n< this->ny; n++){
 			float sum=0;
 			int init = this->nx*n;
 			int end = this->nx*(n+1);
-			for(int i=0; i<heights; i++){
-					for (int j=init; j<end; j++){
+			for(UINT i=0; i<heights; i++){
+					for (UINT j=init; j<end; j++){
 								sum += dbmToMw(image[i][j]);
 					}
 			}
@@ -354,6 +353,35 @@ float Ccalibration::__getDesv(float **image, int nx1, int ny1) {
 
 }
 
+float Ccalibration::getOptFunction(float** array, int nFFTPoints, int nHeis, int nx, int ny){
+
+	float sh, sx, sy;
+	float q;
+	sy = 0;
+	
+	for (UINT iy=0; iy<ny; iy++){
+		sx = 0;
+		for (UINT ix=0; ix<nx; ix++){
+			sh = 0;
+			for (UINT h=0; h<(nHeis*nFFTPoints); h++)
+				sh +=  dbmToMw(array[h][ (iy*nx) + ix]);
+			if (ix < (nx/2)){
+				q = ix / (nx/2);      //distance to center factor
+			}
+			else{
+				q = 1 - (ix -(nx/2))/(nx/2); 
+			}
+			
+			sx += sh* q;
+		}
+		sy += sx;
+		
+	}
+	sy /=(nFFTPoints*nHeis*nx*ny);
+	
+	return sy;
+	// return this->__getPower(array,nx,ny);
+}
 
 //nx = alturas
 //ny = this->nx * this->ny
@@ -370,8 +398,8 @@ void Ccalibration::addPhasePower2(float phase, float **image, int nx, int ny) {
 	__getPower2(image,nx,ny);
 	this->desvList[this->power_len] = this->__getDesv(image,nx,ny);
 
- 	// 128   a   8   ->  1024=ny; nx = alturas
-	for(int i=0; i< this->ny; i++){
+ 	// 128   a   8   ->  1024=ny; 
+	for(UINT i=0; i< this->ny; i++){
 		//printf("\nindex = %d  %d \n",this->power_len, i);
 		//dispMatrix[this->power_len][i] = 1.0;
 		dispMatrix[this->power_len][i] = this->getDispIndx(image,nx,this->nx,i);
@@ -400,9 +428,8 @@ void Ccalibration::addPhasePower(float phase, float **image, int nx, int ny) {
 }
 
 int Ccalibration::getPhaseIndex(){
-	int index_min, index_max, index, max_diff_index;
-	float phase_diff;
-	float norm_power[this->power_len], norm_desv[this->power_len], norm_disp[this->power_len];
+	int index_min, index_max, index;
+	float norm_power[this->power_len], norm_desv[this->power_len];
 //	float delta2_power[this->power_len], delta_power[this->power_len];
 //	const int factor = 10;
 
@@ -463,7 +490,7 @@ int Ccalibration::getPhaseIndex(){
 
 		std::cout << "DISPERSION: "<< endl;
 		for (int i = 0; i < this->power_len; i++) {
-				for (int j = 0; j < this->ny; j++) {
+				for (UINT j = 0; j < this->ny; j++) {
 						printf("%1.3f  ",normIntMatrix[i][j]);
 	        	//std::cout << norm_dispMatrix[i][j] << '      ';
 					}

@@ -527,10 +527,12 @@ int getFilesFromDir (string dir, vector<string> &files, string extension, unsign
 	while ((dirp = readdir(dp)) != NULL) {
 		string candidate( dir + "/" + dirp->d_name );
 		lstat(candidate.c_str(), &_stat);
+		
 		if (not(S_ISREG(_stat.st_mode)))
 			continue;
 
 		file = string(dirp->d_name);
+		
 		if (not(file.substr(file.find_last_of(".") + 1) == extension))
 			continue;
 		if (not(file.size()==lenfilename))

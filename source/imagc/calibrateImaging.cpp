@@ -63,7 +63,9 @@ class CalibrateImag {
 		int __setupObjects(UINT, UINT);
 		void __setNewImagingPath();
 		void __showReadingInfo(float *pNoise, float *pEstimatedPhase, float *pPhase, float *pBeaconPhase, float beacoh);
+		void __showReadingInfo2(float *pNoise, float *pBestPhase, float *pPhase, float *pBeaconPhase, float beacoh, int nIteration, int particle);
 		void __showProcessingInfo(time_t, time_t, char*);
+		void __showProcessingInfo2(time_t, time_t, char*, float, float);
 		int __setupImagingObj(unsigned int *channels, unsigned int nChannels);
 
 	public:
@@ -91,6 +93,7 @@ class CalibrateImag {
 
 		void run();
 		void procData();
+		void procDataPSO();
 };
 
 CalibrateImag::~CalibrateImag(){
@@ -172,7 +175,7 @@ void CalibrateImag::run(){
 	thisYear = pOptions->startYear;
 	thisDoy = pOptions->startDoy;
 
-	printf("Searching files ...\n");
+	printf("Searching files ...\n", pOptions->dpath, thisYear, thisDoy);
 
 	while(1){
 
@@ -190,7 +193,8 @@ void CalibrateImag::run(){
 			this->setConfigFile(thisYear, thisDoy);
 			this->__setupObjects(thisYear, thisDoy);
 			system("clear");
-			this->procData();
+			//this->procData();
+			this->procDataPSO();
 		}
 
 		thisDoy++;
@@ -242,12 +246,22 @@ void CalibrateImag::procData(){
 	}
 
 	if(fileStatus == 0)	return;
+
+
+	this->__setupImagingObj(calibrateObj->channels, calibrateObj->nChannels);
+	system("clear");
+
 	////////////////////////////////
 	////////////////////////////////
 
 	pNoise = pdataUtilObj->getNoise();
 
 	pBeaconPhase = pdataUtilObj->getPhase(pFileOptions->fBeaconRange[0],pFileOptions->fBeaconRange[1], &beacoh);
+
+
+	////////////////////////////////
+	////////////////////////////////
+
 
 	for (UINT i=0; i<pdataUtilObj->nChannels; i++)
 		pPhase[i] = pFileOptions->pHydraPhase[i];
@@ -258,11 +272,11 @@ void CalibrateImag::procData(){
 		pEstimatedPhase[i] = pPhase[i];
 	}
 
+
 	this->__setNewImagingPath();
 	//Auto-calibration loop
 
-	this->__setupImagingObj(calibrateObj->channels, calibrateObj->nChannels);
-	system("clear");
+	
 
 	pdataUtilObj->sec = 0;
 	pdataUtilObj->min = pdataReadObj->sHeader.min;
@@ -323,6 +337,7 @@ void CalibrateImag::procData(){
 		}
 
 		curr_phase += calibrateObj->phase_step;
+
 	}while(curr_phase <= end_phase);
 
 	//Setting channel phase to its right value
@@ -333,6 +348,218 @@ void CalibrateImag::procData(){
 	end_program(printFinalMsg);
 
 }
+
+void CalibrateImag::procDataPSO(){
+
+	int fileStatus = 0;
+	char iFile[30];
+
+	float *pNoise, *pBeaconPhase;
+	float beacoh;
+	float pPhase[pdataUtilObj->nChannels];
+	int m,n;
+	float **image;
+
+
+	time_t startProcTime, endProcTime;
+	int _sec, _min, _hour;
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+	////  PSO variables
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+	int population = 50;
+	int dimensions = calibrateObj->nChannels;
+	float X[population][dimensions]={0};  //particles
+	float bestP[population][dimensions]={0};
+	float bestG[dimensions]={0};
+	float bestFx[population]={0};
+	float fg=0;
+	float fx=0;
+	float V[population][dimensions];  //velocities
+	float w;
+	float wmax = 1;
+	float wmin = 0;
+	float xmax = PI;
+	float xmin = -PI ;
+	float D = 2*PI;    // = xmax - xmin
+	float rp, rg;
+
+	float phiP=1; 	//personal factor
+	float phiG=1; 	//social factor
+
+	int nit=1;
+	int niters = 200;
+	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+	//Getting and averaging data spc & cspc
+	pdataUtilObj->cleanArrays();
+	for(int i=0; i<pOptions->navg; i++)
+	{
+		fileStatus = pdataReadObj->readNextBlock();
+		if(fileStatus == 0) break;
+
+		pdataUtilObj->avgData(pdataReadObj->pSelfSpect,
+							 pdataReadObj->pCrossSpect,
+							 pdataReadObj->pDcSpect,
+							 pdataReadObj->sHeader.ltime);
+	}
+
+	if(fileStatus == 0)	return;
+
+	pNoise = pdataUtilObj->getNoise();
+	pBeaconPhase = pdataUtilObj->getPhase(pFileOptions->fBeaconRange[0],pFileOptions->fBeaconRange[1], &beacoh);
+ 	////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////
+	// Set initial values for each particle and best personal position
+	////////////////////////////////////////////////////////////////
+	
+	for( int i=0; i<population; i++){
+		for(int d=1; d<dimensions; d++){
+			//random values between 0 and 2pi
+			X[i][d] = -PI + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/(2*PI)));
+		}
+	}
+
+	for( int i=0; i<population; i++){
+		for(int d=1; d<dimensions; d++){
+			bestP[i][d] = X[i][d];
+			bestG[d] = X[i][d];
+			pPhase[d] = X[i][d];
+		}
+	}
+
+	////////////////////////////////////////////////////////////////
+	// Set initial values for each particle velocity
+	////////////////////////////////////////////////////////////////
+	
+	for( int i=0; i<population; i++){
+		for(int d=1; d<dimensions; d++){
+			//random values between -2pi and 2pi
+			V[i][d] = -PI + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/(2*PI)));
+		}
+	}
+
+	////////////////////////////////////////////////////////////////
+	// prepare Imaging Object
+	////////////////////////////////////////////////////////////////
+	this->__setNewImagingPath();
+
+	this->__setupImagingObj(calibrateObj->channels, calibrateObj->nChannels);
+	int sts = system("clear");
+
+
+
+	_sec = 0;
+	_min = pdataReadObj->sHeader.min;
+	_hour = pdataUtilObj->hour;
+	
+	////////////////////////////////////////////////////////////////
+	//	PSO calibration loop
+	////////////////////////////////////////////////////////////////
+	time(&startProcTime);
+	do{
+		w = wmax - nit*(wmax - wmin)/niters;
+		for( int i=0; i<population; i++){
+			float _v, _x;
+			// rp = static_cast <float> (rand()) /( static_cast <float> (RAND_MAX));
+			// rg = 1 - rp;
+			for(int d=1; d<dimensions; d++){
+				rp = static_cast <float> (rand()) /( static_cast <float> (RAND_MAX));
+				rg = 1 - rp;
+				float _d;
+				_v = w*V[i][d] + rp*phiP*( bestP[i][d] - X[i][d]) + rg*phiG*( bestG[d] - X[i][d]);
+
+				_x = X[i][d] + _v;
+				//Check Boundaries Li and Shi (2008)
+				//printf("particles : %2.2f, %2.2f, %2.2f\n",_v, _x, rp);
+
+				// check_boundaries:
+                if (_x < xmin){
+					_d = (xmin - _x);
+                    _v = _d*_v/D;
+                    _x = xmax - _d; // Boundaries classic
+					
+				}
+                    
+                if (_x > xmax){
+					_d = (_x - xmax);
+                    _v = _d*_v/D;
+                    _x = xmin + _d; // Boundaries classic
+				}
+				
+                //Update the particle's velocity
+                V[i][d] = _v;
+
+                //Update the particle's position
+                X[i][d] = _x;
+
+				//Change the phase
+				pPhase[d] = _x;
+				
+			}
+
+			//set the phase according the current particle
+			pdataUtilObj->fixPhase(pPhase);
+
+			this->__showReadingInfo2(pNoise, bestG, pPhase, pBeaconPhase, beacoh, nit, i);
+
+			//get Image
+			
+			image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
+			
+			//Saving HDF5 file
+			sprintf(iFile,"img%02d%02d%02d", _hour, _min, _sec);
+
+			svArray2HDF5v2(ipath,iFile,image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
+
+			
+
+			//geting the cost functions
+			fx = calibrateObj->getOptFunction(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
+
+			this->__showProcessingInfo2(startProcTime, endProcTime, iFile, fx, fg);
+			time(&endProcTime);
+
+			if (fx > bestFx[i]){ //update the particle's best known dimensions
+				bestFx[i] = fx;
+				for(int d=1; d<dimensions; d++)
+					bestP[i][d] = X[i][d];
+				
+				if (fx > fg){  //update the swarm's best known dimensions
+					fg = fx;
+					for(int d=1; d<dimensions; d++)
+						bestG[d] = X[i][d];
+				}
+				
+					
+			}
+		}
+
+		//not using time, just to be able to read the data later
+		_sec ++;
+		if ( _sec > 59){
+			_min ++;
+			_sec = 0;
+		}
+
+		if ( _min > 59){
+			_hour ++;
+			_min = 0;
+		}
+		nit++;
+
+	}while(nit <= niters);
+
+	for(UINT ch=0; ch < dimensions; ch++)
+		printf("\nPhase[%d] = %4.3f\n ", ch, bestG[ ch ]);
+
+	end_program(printFinalMsg);
+
+}
+
+
+
 
 int CalibrateImag::__setupObjects(UINT thisYear, UINT thisDoy){
 	//SETTING ARGUMENTS OF PDATA FILE
@@ -590,6 +817,80 @@ void CalibrateImag::__showReadingInfo(float *pNoise, float *pInitialPhase, float
 	//////////////////////////////////////////////////////////
 }
 
+void CalibrateImag::__showReadingInfo2(float *pNoise, float* pBestPhase, float* pCurrPhase, float *pBeaconPhase, float beacoh, int nIteration, int particle){
+
+	int xi, yi;
+	tm *timeinfo;
+	time_t startDataTime, endDataTime;
+
+	////////////////////////////////////////////////////////////////
+	/////////////DISPLAY PDATA INFO ON SCREEN///////////////////////
+
+	gotoxy(1,1);
+	printf("PROCIMAGING v%s: ", version);
+
+	xi = XPDATA; yi = YPDATA;
+	gotoxy(xi,yi++);
+	printf("READING INFO\n");
+
+	gotoxy(xi,yi++);
+	printf("Data path    : %s\n", pOptions->dpath);
+
+	gotoxy(xi,yi++);
+	printf("Pdata file   : %s\n", pdataReadObj->filename);
+
+	gotoxy(xi,yi++);
+	startDataTime  = (time_t)(pdataUtilObj->ltime);
+	timeinfo = localtime(&startDataTime);
+	printf("Start Time   : %s\n", asctime(timeinfo));
+
+	gotoxy(xi,yi++);
+	endDataTime  = (time_t)(pdataReadObj->sHeader.ltime);
+	endDataTime += pdataReadObj->sHeader.blockDelay;
+	timeinfo = localtime(&endDataTime);
+	printf("End Time     : %s\n", asctime(timeinfo));
+
+	gotoxy(xi,yi++);
+	printf("Channels     : ");
+	for (UINT i=0; i<calibrateObj->nChannels; i++)
+		printf("%02d, ", calibrateObj->channels[i]);
+	printf("\n");
+
+	gotoxy(xi,yi++);
+	printf("Channels to calibrate : %02d\n", calibrateObj->nChannels);
+
+	gotoxy(xi,yi++);
+	printf("Iteration Number      : %03d\n", nIteration);
+	yi++;
+
+	gotoxy(XPDATA+2,yi);
+	printf("NOISE:");
+	gotoxy(XPDATA+20,yi);
+	printf("BEST GLOBAL PHASE:");
+	gotoxy(XPDATA+40,yi);
+	printf("PARTICLE %03d PHASE:", particle);
+	gotoxy(XPDATA+70,yi);
+	printf("BEACON PHASE: (coh=%f)", beacoh);
+
+	yi++;
+	//printf("************************\n");
+	for(UINT j=0; j<pdataUtilObj->nChannels; j++)
+	{
+		gotoxy(XPDATA+2,yi+j);
+		printf("[%d]  = %5.2fdB",j , 10*log10(pNoise[j]));
+		gotoxy(XPDATA+20,yi+j);
+		printf("[%d]  = % 5.3f",j , pBestPhase[j]);
+		gotoxy(XPDATA+40,yi+j);
+		printf("[%d]  = % 5.3f",j , pCurrPhase[j]);
+		gotoxy(XPDATA+70,yi+j);
+		printf("[%d]  = % 5.3f",j , pBeaconPhase[j]);
+	}
+
+	//////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////
+}
+
+
 void CalibrateImag::__showProcessingInfo(time_t startTime, time_t endTime, char *iFile){
 
 	int xi, yi;
@@ -630,6 +931,55 @@ void CalibrateImag::__showProcessingInfo(time_t startTime, time_t endTime, char 
 	///////////////////////////////////////////////
 
 }
+
+void CalibrateImag::__showProcessingInfo2(time_t startTime, time_t endTime, char *iFile, float fx, float fg){
+
+	int xi, yi;
+	tm *timeinfo;
+	///////////DISPLAY PROCESS INFO ON SCREEN////////////////
+
+	xi = XIMAGE; yi = YIMAGE;
+	gotoxy(xi,yi++);
+	printf("PROCESSING INFO\n");
+
+	gotoxy(xi,yi++);
+	printf("Processing path  : %s\n", pOptions->ppath);
+
+	gotoxy(xi,yi++);
+	printf("Generated file   : %s.h5\n", iFile);
+
+	gotoxy(xi,yi++);
+	timeinfo = localtime(&startTime);
+	printf("Start proc. time : %s\n", asctime(timeinfo));
+
+	gotoxy(xi,yi++);
+	timeinfo = localtime(&endTime);
+	printf("End proc. time   : %s\n", asctime(timeinfo));
+
+	gotoxy(xi,yi++);
+	printf("Processing time  : %-3li sec\n", endTime - startTime);
+
+	gotoxy(xi,yi++);
+	printf("Best Cost        : %3.3f \n", fg);
+
+	gotoxy(xi,yi++);
+	printf("Cost Function    : %3.3f \n", fx);
+
+
+	gotoxy(XIMAGE, 22);
+	printf("Press 'q' to quit\n");
+
+	gotoxy(XPDATA,pdataUtilObj->nChannels+26);
+
+	//EXIT IF KEY "q" IS PRESSED
+	if(pressKey("q")) end_program(printFinalMsg);
+
+	gotoxy(XPDATA,pdataUtilObj->nChannels+23);
+	////////////////////////////////////////////////
+	///////////////////////////////////////////////
+
+}
+
 
 int main(int argc, char *argv[]){
 

@@ -1,0 +1,24 @@
+Experiment Name=JRO IMAGING 
+#Configuration parameters
+Radar wavelength=6.0
+NCHAN=8
+phase hydra=0.0, -1.0201, -1.99136, -0.772909, 0.51620, 1.65068, -1.254463,2.4574205
+phase beacon=0.0, -1.224, -1.727, -0.373, -1.174, -2.081, 0.090, -1.872
+rx=127.5, 91.5, 127.5, 19.5, 91.5, -127.5, -55.5, -220.824
+ry=127.5, 91.5, 91.5, 55.5, -19.5, -127.5, -127.5, -322.294
+rz=0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+#Processing parameters
+npoints x=512
+npoints y=4
+# Max values in direction cosines
+Max x=0.2
+Max y=0.0
+# Rot angle in degrees, offset in direction cosine
+Angle of rotation=51.3
+#offset 0.0259202
+Dcosy offset=0.025
+# range in kms
+proc range=0, 790
+beacon range=790.0, 840.0
+end
+
