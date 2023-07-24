@@ -60,8 +60,7 @@ genImagCuts.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Da
 
 genImagPlots.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data  --start-year=2019 --start-doy=304 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1
 
-procImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imaging/h5data --start-year=2010 --start-doy=2 --start-hour=18  --navg=10  --config-file=_config2010002.txt --procKey=45
-
+procImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --navg=10  --config-file=calibration.txt --procKey=45
 
 
 

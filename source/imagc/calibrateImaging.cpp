@@ -65,7 +65,7 @@ class CalibrateImag {
 		void __showReadingInfo(float *pNoise, float *pEstimatedPhase, float *pPhase, float *pBeaconPhase, float beacoh);
 		void __showReadingInfo2(float *pNoise, float *pBestPhase, float *pPhase, float *pBeaconPhase, float beacoh, int nIteration, int particle);
 		void __showProcessingInfo(time_t, time_t, char*);
-		void __showProcessingInfo2(time_t, time_t, char*, float, float);
+		void __showProcessingInfo2(time_t, time_t, char*, float, float, int);
 		int __setupImagingObj(unsigned int *channels, unsigned int nChannels);
 
 	public:
@@ -368,7 +368,7 @@ void CalibrateImag::procDataPSO(){
 	////  PSO variables
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
-	int population = 50;
+	int population = 15;
 	int dimensions = calibrateObj->nChannels;
 	float X[population][dimensions]={0};  //particles
 	float bestP[population][dimensions]={0};
@@ -386,10 +386,10 @@ void CalibrateImag::procDataPSO(){
 	float rp, rg;
 
 	float phiP=1; 	//personal factor
-	float phiG=1; 	//social factor
+	float phiG=2; 	//social factor
 
 	int nit=1;
-	int niters = 200;
+	int niters = 50;
 	////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////
 	//Getting and averaging data spc & cspc
@@ -491,49 +491,50 @@ void CalibrateImag::procDataPSO(){
                 //Update the particle's velocity
                 V[i][d] = _v;
 
-                //Update the particle's position
+                //Update the particle's position (phase)
                 X[i][d] = _x;
 
 				//Change the phase
 				pPhase[d] = _x;
+				//set the phase according the current particle
+				pdataUtilObj->fixPhase(pPhase);
+
+				this->__showReadingInfo2(pNoise, bestG, pPhase, pBeaconPhase, beacoh, nit, i);
+
+				//get Image
 				
-			}
-
-			//set the phase according the current particle
-			pdataUtilObj->fixPhase(pPhase);
-
-			this->__showReadingInfo2(pNoise, bestG, pPhase, pBeaconPhase, beacoh, nit, i);
-
-			//get Image
-			
-			image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
-			
-			//Saving HDF5 file
-			sprintf(iFile,"img%02d%02d%02d", _hour, _min, _sec);
-
-			svArray2HDF5v2(ipath,iFile,image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
-
-			
-
-			//geting the cost functions
-			fx = calibrateObj->getOptFunction(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
-
-			this->__showProcessingInfo2(startProcTime, endProcTime, iFile, fx, fg);
-			time(&endProcTime);
-
-			if (fx > bestFx[i]){ //update the particle's best known dimensions
-				bestFx[i] = fx;
-				for(int d=1; d<dimensions; d++)
-					bestP[i][d] = X[i][d];
+				image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
 				
-				if (fx > fg){  //update the swarm's best known dimensions
-					fg = fx;
-					for(int d=1; d<dimensions; d++)
-						bestG[d] = X[i][d];
-				}
+				//Saving HDF5 file
+				sprintf(iFile,"img%02d%02d%02d", _hour, _min, _sec);
+
+				svArray2HDF5v2(ipath,iFile,image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
+
 				
+
+				//geting the cost functions
+				fx = calibrateObj->getOptFunction(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
+
+				this->__showProcessingInfo2(startProcTime, endProcTime, iFile, fx, fg, d);
+				time(&endProcTime);
+
+				if (fx > bestFx[i]){ //update the particle's best known dimension
+					bestFx[i] = fx;
 					
+					bestP[i][d] = X[i][d];
+					
+					if (fx > fg){  //update the swarm's best known dimensions
+						fg = fx;
+						
+						bestG[d] = X[i][d];
+					}
+					
+						
+				}
+
 			}
+
+			
 		}
 
 		//not using time, just to be able to read the data later
@@ -932,7 +933,7 @@ void CalibrateImag::__showProcessingInfo(time_t startTime, time_t endTime, char 
 
 }
 
-void CalibrateImag::__showProcessingInfo2(time_t startTime, time_t endTime, char *iFile, float fx, float fg){
+void CalibrateImag::__showProcessingInfo2(time_t startTime, time_t endTime, char *iFile, float fx, float fg, int dim){
 
 	int xi, yi;
 	tm *timeinfo;
@@ -960,10 +961,10 @@ void CalibrateImag::__showProcessingInfo2(time_t startTime, time_t endTime, char
 	printf("Processing time  : %-3li sec\n", endTime - startTime);
 
 	gotoxy(xi,yi++);
-	printf("Best Cost        : %3.3f \n", fg);
+	printf("Best Fx        : %3.3f \n", fg);
 
 	gotoxy(xi,yi++);
-	printf("Cost Function    : %3.3f \n", fx);
+	printf("Cost Fx p[%d]    : %3.3f \n",dim, fx);
 
 
 	gotoxy(XIMAGE, 22);

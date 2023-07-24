@@ -1,25 +1,25 @@
 #Configuration parameters
 Radar wavelength=6.0
 NCHAN=8
-phase hydra=0.0, 0.098, -1.0, -0.490, 0.589, -1.374, 0.883, 1.963
-phase beacon=0.0, 0.304, -2.265, -2.576, -2.938, 0.554, -1.481, 0.291 
+phase hydra=0.0, 0.75, -2.7, 1.74, 1.78, 1.45, 0.349, 0.666
+phase beacon=0.0, 2.8, -0.343, 2.693, 1.88, -1.186, 1.940, 1.141 
 rx=127.5, 91.5, 127.5, 19.5, 91.5, -127.5, -55.5, -220.824
 ry=127.5, 91.5, 91.5, 55.5, -19.5, -127.5, -127.5, -322.294
 rz=0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 #Processing parameters
 #256 a 16, 0.1 a 0.1
-npoints x=128
+npoints x=64
 npoints y=4
 # Max values in direction cosines
-Max x=0.85
-Max y=0.01
+Max x=0.1
+Max y=0.05
 # Rot angle in degrees, offset in direction cosine
 Angle of rotation=51.3
 Dcosy offset=-0.0
 # range in kms
 #proc range=50, 930
 #beacon range=940.0, 980.0
-proc range=50,780
+proc range=150,500
 beacon range=820.0, 847.5
 end
 
