@@ -7,12 +7,16 @@
 #define N_POINTS_Y 16
 #define N_MAX_STEPS 150
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
+
+
+
 #include "calibration.h"
+
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+using namespace cv;
+
 #include <iostream>
 
 float dispMatrix[N_MAX_STEPS][N_POINTS_Y];
@@ -353,34 +357,99 @@ float Ccalibration::__getDesv(float **image, int nx1, int ny1) {
 
 }
 
+float Ccalibration::getSharpness(float **src, int nFFTPoints, int nHeis, int nx, int ny){
+	// Declare the variables we are going to use
+
+	int kernel_size = 3;
+	int scale = 1;
+	int delta = 0;
+	int ddepth = -1;
+
+	// printf(" Done 001\n");
+	Mat image(nx, nHeis, CV_64F);
+	Mat imageo(nx, nHeis, CV_64F);
+
+	// int rows = sizeof(src) / sizeof(src[0][0]); // rows  
+  	// int cols = sizeof(src[0][0]) / sizeof(float); //  cols
+	// printf(" Done 01\n");
+	// printf(" Done 01\n");
+	// printf(" Done 01\n");
+	// printf(" Done 01\n");
+	// printf( " nx:%d,nh:%d \n", rows, cols);
+	// cv::Mat image(nHeis, nx, CV_64F, src);
+	// cv::Mat imageo(nHeis, nx, CV_64F, src);
+	Scalar mean,stddev;
+	//float **image;
+	//float **imageo;
+	float median, variance;
+	float sy=0, st=0;
+	//printf(" Done 0\n");
+	for( int h=0; h<nHeis; h++ ){
+
+		for(int x=0; x<nx; x++){
+			sy = 0;
+			for(int y=0; y<ny; y++ ){
+				st = 0;
+				for(int t=0; t<nFFTPoints; t++){
+					//printf( " i:%d,j:%d ", h*nFFTPoints+t, x + y*nx);
+					st += src[h*nFFTPoints+t][x + y*nx];
+				}
+				sy += st;
+				
+			}
+			//printf( " x:%d,h:%d ", x, h);
+			image.at<double>(x,h) = sy; 
+			
+		}
+	}
+
+	cv::Laplacian( image, imageo, ddepth, kernel_size, scale, delta, BORDER_DEFAULT);
+
+	//printf(" Done 2\n");
+	cv::meanStdDev(imageo, mean,  stddev);
+	//return 0.0;
+	return stddev.val[0];
+
+}
+
 float Ccalibration::getOptFunction(float** array, int nFFTPoints, int nHeis, int nx, int ny){
 
 	float sh, sx, sy;
-	float q;
+	float q,p;
+	float image[nHeis][nx];
 	sy = 0;
-	
+	// printf( "fft:%d, heis:%d, nx:%d, ny:%d", nFFTPoints, nHeis, nx, ny);
+	UINT maxHei = nHeis*nFFTPoints; 
 	for (UINT iy=0; iy<ny; iy++){
 		sx = 0;
 		for (UINT ix=0; ix<nx; ix++){
 			sh = 0;
-			for (UINT h=0; h<(nHeis*nFFTPoints); h++)
+			for (UINT h=0; h<maxHei; h++)
 				sh +=  dbmToMw(array[h][ (iy*nx) + ix]);
+				
 			if (ix < (nx/2)){
 				q = ix / (nx/2);      //distance to center factor
 			}
 			else{
 				q = 1 - (ix -(nx/2))/(nx/2); 
 			}
-			
 			sx += sh* q;
 		}
+			sx += sh;
+			
+		if (iy < (ny/2)){
+			p = iy / (ny/2);      //distance to center factor
+		}
+		else{
+			p = 1 - (iy -(ny/2))/(ny/2); 
+		}
+		sy += p*sx;
 		sy += sx;
-		
 	}
-	sy /=(nFFTPoints*nHeis*nx*ny);
+	sy /=(nHeis*nx*ny);
 	
 	return sy;
-	// return this->__getPower(array,nx,ny);
+	//return this->__getPower(array,nx,ny);
 }
 
 //nx = alturas

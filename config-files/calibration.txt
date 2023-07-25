@@ -8,8 +8,8 @@ ry=127.5, 91.5, 91.5, 55.5, -19.5, -127.5, -127.5, -322.294
 rz=0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 #Processing parameters
 #256 a 16, 0.1 a 0.1
-npoints x=64
-npoints y=4
+npoints x=128
+npoints y=16
 # Max values in direction cosines
 Max x=0.1
 Max y=0.05
