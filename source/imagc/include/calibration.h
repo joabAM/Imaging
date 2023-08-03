@@ -28,7 +28,6 @@ class Ccalibration{
 
 
 		float __getPower(float** image, int nx, int ny);
-		void __getPower2(float** image, int heights, int len);
 		float __getDesv(float** image, int nx, int ny);
 
 	public:
@@ -68,9 +67,10 @@ class Ccalibration{
 		void nextSequence();
 		int isTheLastChannel();
 		void addPhasePower(float phase, float **image, int nx, int ny);
-	  	void addPhasePower2(float phase, float **image, int nx, int ny);
+	  	// void addPhasePower2(float phase, float **image, int nx, int ny,int nFFTPoints, int nHeis);
 		float getOptFunction(float** array, int nFFTPoints, int nHeis, int nx, int ny);
 		float getSharpness(float** src, int nFFTPoints, int nHeis, int nx, int ny);
+		void meanFilter(float src[],float dst[], int windowsize, int N) ;
 		float estimatePhase();
 		float getDispIndx(float **image, int n, int m, int pos);
 		void printEstimatedPhases();

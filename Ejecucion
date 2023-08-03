@@ -58,12 +58,13 @@ calibrateImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imagi
 
 genImagCuts.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=21  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
 
-genImagPlots.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data  --start-year=2019 --start-doy=304 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1
+genImagPlots.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data  --start-year=2018 --start-doy=7 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1 --min-dcosy=-0.1 --max-dcosy=0.1
 
 procImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --navg=10  --config-file=calibration.txt --procKey=45
 
 
+genImagCuts.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=24  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-rcut
 
-
+scp -r operaciones@10.10.20.9:/puma80/Operaciones/DATA-Operaciones/JULIA_EW_IMAGING/IMAGING/PDATA/D2018/d2018008 /mnt/DATA/pdata
 
 
