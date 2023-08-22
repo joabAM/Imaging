@@ -41,10 +41,21 @@ class Ccalibration{
 		UINT nx, ny, nffts, nheis;
 		float max_x, max_y;
 		int power_len;
-
+		bool filterPower;
 		float *powerList;
 		float *phaseList;
 		float *desvList;
+		float calPhaseList[8]={0};
+
+		float const chanParameters [8][4] ={ {0.0, 0.0, 0.0, 0.0},
+											{0.2, 0.2, 64, 16}, //2
+											{0.1, 0.1, 64, 32}, //1
+											{0.1, 0.1, 96, 16}, 
+											{0.1, 0.05, 128, 16},
+											{0.1, 0.05, 128, 16},//5
+											{0.1, 0.05, 128, 16},
+											{0.1, 0.02, 128, 16},
+											};
 
 
 		bool *errorList;
@@ -66,15 +77,16 @@ class Ccalibration{
 				UINT __nFFTs, UINT __nHeis, float Xmax, float Ymax);
 		void nextSequence();
 		int isTheLastChannel();
-		void addPhasePower(float phase, float **image, int nx, int ny);
+		void addPhasePower(float phase, float **image, int nx, int ny, bool show);
 	  	// void addPhasePower2(float phase, float **image, int nx, int ny,int nFFTPoints, int nHeis);
 		float getOptFunction(float** array, int nFFTPoints, int nHeis, int nx, int ny);
 		float getSharpness(float** src, int nFFTPoints, int nHeis, int nx, int ny);
 		void meanFilter(float src[],float dst[], int windowsize, int N) ;
+		
 		float estimatePhase();
 		float getDispIndx(float **image, int n, int m, int pos);
 		void printEstimatedPhases();
-		int getPhaseIndex();
+		int getPhaseIndex(int filterPoints);
 		bool isTrust();
 };
 

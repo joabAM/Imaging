@@ -106,7 +106,8 @@ class Cimaging {
 		int setParameters(int, int, int, UINT*, int, CROSS*, int, int*,
 				UINT, UINT*);
 		void getSpreadFunc(float*, float*, float*, float, float, float, float, float);
-		float** getImaging(float **, fcomplex **, float *, float, int, int*, int*);
+		void getSpreadFunc2(float*, float*, float*, float, float, float, float, float, float);
+		float** getImaging(float **, fcomplex **, float *, float, int, int*, int*, bool);
 
 };
 

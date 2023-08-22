@@ -3,7 +3,9 @@
  *
  *  Created on: Apr 22, 2015
  *      Author: murco
- */
+ *	Upgade on: Sept , 2023
+		Autor: Joab Apaza
+*/
 #define N_POINTS_Y 16
 #define N_MAX_STEPS 150
 
@@ -12,10 +14,6 @@
 
 #include "calibration.h"
 
-#include "opencv2/imgproc.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
-using namespace cv;
 
 #include <iostream>
 
@@ -120,6 +118,38 @@ int getMinIndex(float *vector,int len_vector){
 	return index;
 }
 
+void limitOutliers(float data[], int n){
+	float median;
+	float acum=0;
+	float peakval;
+	int i = 0;
+	int index_min, index_max, minVal, maxVal;
+	index_min = getMinIndex(data, n);
+	index_max = getMaxIndex(data, n);
+	maxVal = data[index_max];
+	minVal = data[index_min];
+	printf("-> %1.1f, %1.1f",minVal, maxVal );
+	for(i=0; i<n; i++)
+		acum += data[i];
+	
+	median = acum/n;
+	median *= 0.85; // it's already afected by outliers
+	peakval = (2*median); 
+
+	// if ((maxVal - median )  > (median - minVal) )
+	// 	peakval = (median - minVal);
+	// else 
+	// 	peakval = (maxVal - median);
+
+	for(i=0; i<n; i++){
+		if ((data[i] - median) > median)
+			data[i] = median;
+		
+	}	
+	
+}
+
+
 Ccalibration::Ccalibration() {
 
 	this->initialized = false;
@@ -145,6 +175,7 @@ void Ccalibration::init(int __cal_auto, UINT* __chan_sequence, UINT __max_nchann
 	this->nheis = __nHeis;
 	this->max_x = Xmax;
 	this->max_y = Ymax;
+	this->filterPower = false;
 	//****************************************************************
 	//
 
@@ -252,20 +283,21 @@ float Ccalibration::__getPower(float **image, int nx, int ny) {
 	// TODO Auto-generated constructor stub
 	float sum=0;
 	float minValue = -20;
+	int nans = 0;
 	if (!this->initialized)
 		return minValue;
 	for(int i=0; i<nx; i++){
 		for (int j=0; j<ny; j++){
 			if (image[i][j] == -99.0){
-				sum += minValue;
+				// sum += 0;
+				nans++;
 				continue;
 			}
-//			tmp = pow(10,image[i][j]);
-//			if (tmp < minValue)  tmp = minValue;
+
 			sum += image[i][j];
 		}
 	}
-	return sum/(nx*ny);
+	return sum/(nx*ny-nans);
 }
 
 
@@ -453,21 +485,21 @@ void Ccalibration::meanFilter(float src[],float dst[], int windowsize, int N) {
     for (int i = 0; i < N; i++) {
 		float acum = 0;
         if (i < (windowsize/2)){
-			for (int k=0; k< (windowsize/2)+i; k++)
-				acum += src[k];
-			acum /= (windowsize/2 + i );
+			for (int k=(N-windowsize/2 +i); k<(N+windowsize/2 + i); k++)
+				acum += src[ static_cast<int>(fmod(k, N)) ];
+			acum /= (windowsize);
 			
 		} 
 		else if(i < (N - (windowsize/2))){
 			for (int k=-(windowsize/2); k<(windowsize/2); k++)
 				acum += src[i+k];
-			acum /= (windowsize-1);
+			acum /= (windowsize);
 		
 		}
 		else{
-			for (int k= i - (windowsize/2); k < N; k++)
-				acum += src[k];
-			acum /= ( N - i + windowsize/2);
+			for (int k= i - (windowsize/2); k<( i + (windowsize/2)) ; k++)
+				acum += src[ static_cast<int>(fmod(k, N)) ];
+			acum /= (windowsize);
 			
 		}
 		dst[i] = acum; 
@@ -475,6 +507,7 @@ void Ccalibration::meanFilter(float src[],float dst[], int windowsize, int N) {
     }
 
 }
+
 //nx = alturas
 //ny = this->nx * this->ny
 // void Ccalibration::addPhasePower2(float phase, float **image, int nx, int ny, int nFFTPoints, int nHeis) {
@@ -503,7 +536,7 @@ void Ccalibration::meanFilter(float src[],float dst[], int windowsize, int N) {
 
 // }
 
-void Ccalibration::addPhasePower(float phase, float **image, int nx, int ny) {
+void Ccalibration::addPhasePower(float phase, float **image, int nx, int ny, bool show) {
 	// TODO Auto-generated constructor stub
 	// printf("\npointsx = %d\n",this->nx);
 	// printf("\npointsy = %d\n",this->ny);
@@ -513,101 +546,75 @@ void Ccalibration::addPhasePower(float phase, float **image, int nx, int ny) {
 	this->phaseList[this->power_len] = phase;
 	this->powerList[this->power_len] = this->__getPower(image,nx,ny);
 
-	this->desvList[this->power_len] = this->__getDesv(image,nx,ny);
+	// this->desvList[this->power_len] = this->__getDesv(image,nx,ny);
+	this->desvList[this->power_len] = this->__getPower(image,nx,ny);
 
-	printf("\nphase nro = %d\n",	this->power_len);
+	if (show) printf("\n\n\n\n\nphase nro = %d\n",	this->power_len);
 	this->power_len += 1;
 
 }
 
-int Ccalibration::getPhaseIndex(){
+
+int Ccalibration::getPhaseIndex(int filterPoints){
 	int index_min, index_max, index;
 	float norm_power[this->power_len], norm_desv[this->power_len];
-	float norm_power2[this->power_len];
+	float norm_power2[this->power_len]={0};
+	float norm_powerInt[this->power_len]={0};
 //	float delta2_power[this->power_len], delta_power[this->power_len];
 //	const int factor = 10;
 
 	index_min = getMinIndex(this->desvList, this->power_len);
 	index_max = getMaxIndex(this->desvList, this->power_len);
 
-	for (int i=0; i<this->power_len; i++)
+	for (int i=0; i<this->power_len; i++){
 		norm_desv[i] = (this->desvList[i] - this->desvList[index_min])/(this->desvList[index_max] - this->desvList[index_min]);
+		norm_powerInt[i] = norm_desv[i]*30;
+	}
 
 	index_min = getMinIndex(this->powerList, this->power_len);
 	index_max = getMaxIndex(this->powerList, this->power_len);
 
+	// limitOutliers(norm_desv, this->power_len); //solo 4 a mas
+
 	for (int i=0; i<this->power_len; i++)
 		norm_power[i] = (this->powerList[i] - this->powerList[index_min])/(this->powerList[index_max] - this->powerList[index_min]);
 	
+	// if (this->channel > 4)
+	// 	limitOutliers(norm_power, this->power_len); //solo
+
 	//////////////////////////////////////////
-	this->meanFilter(norm_power,norm_power2, 7 , this->power_len);
-	for (int i=0; i<this->power_len; i++)
-		norm_power2[i] = (norm_power[i] - norm_power[index_min])/(norm_power[index_max] - norm_power[index_min]);
+	if (this->filterPower){
+		this->meanFilter(norm_power,norm_power2, filterPoints, this->power_len);
+		index_min = getMinIndex(norm_power2, this->power_len);
+		index_max = getMaxIndex(norm_power2, this->power_len);
+		// printf("\n\n\n\n\n Filtering the data \n");
+		for (int i=0; i<this->power_len; i++)
+			norm_power[i] = (norm_power2[i] - norm_power2[index_min])/(norm_power2[index_max] - norm_power2[index_min]);
+		
+		}
 	
-	index_min = getMinIndex(norm_power2, this->power_len);
-	index_max = getMaxIndex(norm_power2, this->power_len);
+
 	index = index_max;
-	//////////////////////////////////////////
-
-	// if (this->nChannels < 3)
-	// 	index = index_min;
-	// else
-	// 	index = index_max;
-
-	//***********************************************************
-	//float norm_dispMatrix[this->power_len][N_POINTS_Y];
-	//uint8_t normIntMatrix[this->power_len][N_POINTS_Y];
-	//uint8_t normPowerMatrix[this->power_len][N_POINTS_Y];
-	// float normIntMatrix[this->power_len][N_POINTS_Y];
-	// float normPowerMatrix[this->power_len][N_POINTS_Y];
-	//normMatrixInt(dispMatrix, normIntMatrix,this->power_len, this->ny,255);
-	// normMatrix(dispMatrix, normIntMatrix,this->power_len, this->ny);
-	// normMatrix(powerMatrix, normPowerMatrix,this->power_len, this->ny);
-
-	//cv::Mat normIMG(this->power_len,N_POINTS_Y, CV_8U, &normIntMatrix);
-  	//cv::Mat normPWR(this->power_len,N_POINTS_Y, CV_8U, &normPowerMatrix);
-
-	//cout << "P = " << endl << " " << normPWR << endl << endl;
-
-	// cv::Mat IMG;
-	// cv::Mat greyImg = cv::Mat( this->power_len,this->ny, CV_8U, &normIntMatrix);
-	// std::string greyArrWindow = "Grey Array Image";
-	// cv::resize(greyImg,IMG,cv::Size(128,512),cv::INTER_AREA);
-	// cv::Mat img_color;
-	// cv::applyColorMap(IMG, img_color, cv::COLORMAP_HOT);
-	// //cv::applyColorMap(greyImg, img_color, cv::COLORMAP_HOT);
-	// cv::namedWindow(greyArrWindow, cv::WINDOW_NORMAL);
-	// //cv::resizeWindow(greyArrWindow, 100, 580);
-	// cv::imshow(greyArrWindow, img_color);
-	//
-	// cv::waitKey(0);
-	// cv::destroyAllWindows();
-
-	// std::cout << "POTENCIA: "<<endl;
-	// for (int i = 0; i < this->power_len; i++) {
-	// 		for (int j = 0; j < this->ny; j++) {
-	// 				printf("%1.3f  ",normPowerMatrix[i][j]);
-    //     	//std::cout << norm_dispMatrix[i][j] << '      ';
-	// 			}
-	// 		std::cout << endl;
-    // }
-
-	// 	std::cout << "DISPERSION: "<< endl;
-	// 	for (int i = 0; i < this->power_len; i++) {
-	// 			for (UINT j = 0; j < this->ny; j++) {
-	// 					printf("%1.3f  ",normIntMatrix[i][j]);
-	//         	//std::cout << norm_dispMatrix[i][j] << '      ';
-	// 				}
-	// 			std::cout << endl;
-	//     }
-//***********************************************************
+	
 
 	printf("\n\nIndex \t Norm power \t desv std \n");
 	for (int i=0; i<this->power_len; i++)
-		printf("[%02d] = %8.4f\t%8.4f \n",i, norm_power2[i], norm_desv[i]);
+		// printf("[%02d] = %8.4f\t%8.4f \n",i, norm_power2[i], norm_power[i]);
+		printf("[%02d] = %8.4f\t%8.4f \n",i, norm_power[i], norm_desv[i]);
 	printf("\nmin-index=%d, max-index=%d", index_min, index_max);
 	printf("\nMin phase[min-index]=%f, Max phase[max-index]=%f\n", this->phaseList[index_min], this->phaseList[index_max]);
 	//printf("\nmax diference=%f at index=%d with phase=%f\n",diff_power_desv[max_diff_index],max_diff_index,phase_diff);
+
+	for(int k=30; k>0 ; k--){
+		for (int p=0; p<this->power_len; p++){
+			if (norm_powerInt[p] >= k)
+				printf("*");
+			else
+				printf(" ");
+		}
+		cout<<endl;
+
+	}
 
 	return index;
 
@@ -616,12 +623,21 @@ int Ccalibration::getPhaseIndex(){
 float Ccalibration::estimatePhase(){
 	int index;
 	float phase;
-
+	int filterPoints=19;
+	int factor=1;
 	if (!this->initialized)
 		return 0;
+	if (this->power_len>120 & this->power_len<200) factor=2;
+	if (this->power_len>600) factor=10;
 
-	index = this->getPhaseIndex();
-
+	if (this->channel<4)
+		filterPoints=5*factor;
+	else if( this->channel<7) 
+		filterPoints=15*factor;
+	else 
+		filterPoints=21*factor;
+	
+	index = this->getPhaseIndex(filterPoints);
 	if (index < 0) return 0;
 
 	if (this->phaseList[index] <= PI)

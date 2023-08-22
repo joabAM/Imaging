@@ -54,6 +54,9 @@ namespace std{
 
 struct options{
 	int proc_key;
+	int nx, ny;
+	int sh;
+	float dx, dy;
 	//DATE HEADER
 	char dpath[100];
 	char ppath[100];

@@ -22,6 +22,7 @@ sudo apt-get install python-cairo
 
 sudo apt-get install python-tk
 
+sudo apt-get install mencoder
 
 
 #############################################################################################
@@ -74,3 +75,5 @@ cd ..
 sudo bash ./installImaging
 
 
+ sudo apt-get install ubuntu-restricted-extras
+ sudo apt-get install libavcodec58 ffmpeg

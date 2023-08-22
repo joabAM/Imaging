@@ -355,7 +355,67 @@ void Cimaging::getSpreadFunc(float *rx, float *ry, float *rz, float scalex, floa
 	delete [] dz;
 }
 
-float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *noise, float snrThr, int navg, int* xDim, int* yDim){
+void Cimaging::getSpreadFunc2(float *rx, float *ry, float *rz, float scalex, float scaley, float rotangle, float offsetx, float offsety, float wl){
+
+	int i,j,k=0;
+
+	float *dx = new float [nb];
+	float *dy = new float [nb];
+	float *dz = new float [nb];
+
+	float dcosx[nx][ny],dcosy[nx][ny];
+	float dcosxp[nx][ny],dcosyp[nx][ny];
+	double pi,psi,eta,phase;
+	float wavel;
+
+	//OPTIMIZING
+	double *pM;
+
+	for(i=0;i<nb;i++){
+		dx[i] = rx[ channelsSel[ind2[i]] ]-rx[ channelsSel[ind1[i]] ];
+		dy[i] = ry[ channelsSel[ind2[i]] ]-ry[ channelsSel[ind1[i]] ];
+		dz[i] = rz[ channelsSel[ind2[i]] ]-rz[ channelsSel[ind1[i]] ];
+	}
+
+	pi=4.0*atan(1.0);
+	wavel = wl;
+	for(i=0;i<nx;i++){
+		for(j=0;j<ny;j++){
+			dcosx[i][j] = scalex*(float)(i-nx/2)/(float)nx+offsetx;
+			dcosy[i][j] = scaley*(float)(j-ny/2)/(float)ny+offsety;
+		}
+	}
+
+	// Rotating direction cosines and offset
+	for(i=0;i<nx;i++){
+		for(j=0;j<ny;j++){
+			dcosxp[i][j] = dcosx[i][j]*cos(rotangle)-dcosy[i][j]*sin(rotangle);
+			dcosyp[i][j] = dcosx[i][j]*sin(rotangle)+dcosy[i][j]*cos(rotangle);
+		}
+	}
+
+	//Calculating point spread function
+	pM = hp3d;
+	for(i=0;i<nx;i++){
+		for(j=0;j<ny;j++){
+			psi=dcosxp[i][j];
+			eta=dcosyp[i][j];
+			for(k=0;k<nb;k++){
+				phase=(2.0*pi/wavel)*(psi*dx[k]+eta*dy[k]+sqrt(1.0-psi*psi-eta*eta)*dz[k]);
+				//hp[i][j][2*k]=cos(phase);
+				//hp[i][j][2*k+1]=sin(phase);
+				*(pM++) = cos(phase);
+				*(pM++) = sin(phase);
+			}
+		}
+	}
+
+	delete [] dx;
+	delete [] dy;
+	delete [] dz;
+}
+
+float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *noise, float snrThr, int navg, int* xDim, int* yDim, bool show){
 	/*
 	 *
 	 * 		**pSelfSpect
@@ -431,7 +491,7 @@ float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *
 		}
 	}
 	gotoxy(1,yi);
-	printf("Processing ...\n");
+	if (show) printf("Processing ...\n");
 
 	//Clear shared memory
 	memset(shm_addr,NAN_INT,(xSize)*(ySize)*sizeof(float)); //setting -1734829824 (float) = -50 (int)
@@ -451,7 +511,7 @@ float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *
 	yscreen = yi + 1 + idThr % 12;
 
 	gotoxy(xscreen-20, yscreen);
-	printf("PID No");
+	if (show) printf("PID No");
 
 	for(i=0;i<NTHREADS-1;i++){
 		pid = fork();
@@ -473,7 +533,7 @@ float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *
 	nRanges = maxRange-minRange;
 
 	gotoxy(xscreen-20, yscreen);
-	printf("[%02d]: (%4d,%4d)\n", getpid(), minRange, maxRange-1);
+	if (show) printf("[%02d]: (%4d,%4d)\n", getpid(), minRange, maxRange-1);
 
 
 	for(int id=minRange;id<maxRange;id++)
@@ -537,7 +597,7 @@ float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *
 		}
 
 		gotoxy(xscreen, yscreen);
-		printf("[%s] %2d%c {Info=%d}\n", msg_progress+progress_count, (count+1)*100/nRanges, 0x25, info);
+		if (show) printf("[%s] %2d%c {Info=%d}\n", msg_progress+progress_count, (count+1)*100/nRanges, 0x25, info);
 
 		count += 1;
 		progress_count+=2;
@@ -560,17 +620,17 @@ float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *
 	if (pid == 0)
 	{
 		gotoxy(xscreen, yscreen);
-		printf("exiting                    \n");
+		if (show) printf("exiting                    \n");
 		_exit(0);
 	}
 
 	for(i=0;i<NTHREADS-1;i++){
 		gotoxy(xscreen, yscreen);
-		printf("waiting for pid=%4d\n", pidList[i]);
+		if (show) printf("waiting for pid=%4d\n", pidList[i]);
 		waitpid(pidList[i],&o,0);
 	}
 	gotoxy(xscreen, yscreen);
-	printf("exited                        \n");
+	if (show) printf("exited                        \n");
 
 	*xDim = xSize;
 	*yDim = ySize;
@@ -583,6 +643,7 @@ float** Cimaging::getImaging(float **pSelfSpect, fcomplex **pCrossSpect, float *
     	for(j=0;j<ySize;j++)
     		image_test[j][i] = shm_addr[i*ySize+j];
 
+	if (!show) gotoxy(0, 0);
 	return(image_test);
 }
 

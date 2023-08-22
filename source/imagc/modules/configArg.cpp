@@ -123,6 +123,7 @@ void getArgs(int argc, char *argv[], char *dpath, char *ppath, UINT *sYear, UINT
 			{"minHei",  required_argument, 0, 'o'},
 			{"maxHei",  required_argument, 0, 'u'},
 			{"procKey", required_argument, 0,'pk'},
+			
             {0, 0, 0, 0}
           };
         //* getopt_long stores the option index here.
@@ -858,7 +859,11 @@ options* getArgs3(int argc, char *argv[]){
 	sprintf(opt->dpath,"NON ARGUMENT");
 	sprintf(opt->ppath,"NON ARGUMENT");
 	opt->proc_key = 191;
-	opt->set = -100;
+	opt->nx = -1;
+	opt->ny = -1;
+	opt->sh = 1;
+	opt->dx = -1.0;
+	opt->dy = -1.0;
 	opt->startYear = opt->startDoy = opt->endYear = opt->endDoy = 0;
 	opt->startHour = 0; opt->startMin = 0;
 	opt->endHour = 24; opt->endMin = 0;
@@ -931,7 +936,12 @@ options* getArgs3(int argc, char *argv[]){
 			{"cal-phase-step",  required_argument, 0, 'y'},
 			{"cal-auto-sequence",  required_argument, 0, 'z'},
 			{"cal-nsteps",  required_argument, 0, '1'},
-			{"procKey", required_argument, 0, 'pk'},
+			{"procKey", required_argument, 0,'pk'},
+			{"nxPoints", required_argument, 0,'nx'},
+			{"nyPoints", required_argument, 0,'ny'},
+			{"dcosxM", required_argument, 0,'dx'},
+			{"dcosyM", required_argument, 0,'dy'},
+			{"showProcess", required_argument, 0,'sh'},
             {0, 0, 0, 0}
           };
         //* getopt_long stores the option index here.
@@ -1064,8 +1074,23 @@ options* getArgs3(int argc, char *argv[]){
     		textcolor(RESET, BLACK, WHITE);
 			end_program(true);
 			break;
-			case 'pk':
+		case 'pk':
 			opt->proc_key = atoi(optarg);
+			break;
+		case 'nx':
+			opt->nx = atoi(optarg);
+			break;
+		case 'ny':
+			opt->ny = atoi(optarg);
+			break;
+		case 'dx':
+			opt->dx = atof(optarg);
+			break;
+		case 'dy':
+			opt->dy = atof(optarg);
+			break;
+		case 'sh':
+			opt->sh = atoi(optarg);
 			break;
     	case '?':
     		//* getopt_long already printed an error message.

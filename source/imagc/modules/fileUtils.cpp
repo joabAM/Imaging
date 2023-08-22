@@ -6,6 +6,72 @@
  */
 
 #include "fileUtils.h"
+#include <fstream>
+#include <iostream>
+
+int writeConfigFile(struct configParameters* cparam, char* path, char* file){
+
+
+	char tempStr[1024];//Readed Line Text
+	char *valstr;//Readed Value
+	unsigned int i;
+	float beaconPhase[20];
+	char filename[1024];
+	char os_sep[] = "/";
+
+	if (file[0] == os_sep[0])
+	{	//file is an absolute path
+		strcpy(filename,file);
+	}
+	else{
+		//file is not an absolute path so add path
+		strcpy(filename, path);
+
+		if (path[strlen(path) - 1] != os_sep[0]){
+			strcat(filename, "/");
+		}
+
+		strcat(filename,file);
+	}
+
+	printf("CONFIG_FILE = %s\n", filename);
+
+	
+	fstream fp (filename, ios::out | ios::trunc);
+
+
+	if (fp.is_open())
+	{	
+		fp << "Experiment Name="<<cparam->sExpName;
+		fp << "#Configuration parameters\n";
+		fp << "Radar wavelength="<<cparam->wavelength<<"\n";
+		fp << "NCHAN="<<cparam->nChannels<<"\n";
+		fp << "phase hydra="<<cparam->pHydraPhase[0]<<", "<<cparam->pHydraPhase[1]<<", "<<cparam->pHydraPhase[2]<<", "<<cparam->pHydraPhase[3]<<", "<<cparam->pHydraPhase[4]<<", "<<cparam->pHydraPhase[5]<<", "<<cparam->pHydraPhase[6]<<", "<<cparam->pHydraPhase[7]<<"\n";
+		fp << "phase beacon="<<"0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0"<<"\n";
+		fp << "rx="<<cparam->pRx[0]<<", "<<cparam->pRx[1]<<", "<<cparam->pRx[2]<<", "<<cparam->pRx[3]<<", "<<cparam->pRx[4]<<", "<<cparam->pRx[5]<<", "<<cparam->pRx[6]<<", "<<cparam->pRx[7]<<"\n";
+		fp << "ry="<<cparam->pRy[0]<<", "<<cparam->pRy[1]<<", "<<cparam->pRy[2]<<", "<<cparam->pRy[3]<<", "<<cparam->pRy[4]<<", "<<cparam->pRy[5]<<", "<<cparam->pRy[6]<<", "<<cparam->pRy[7]<<"\n";
+		fp << "rz="<<cparam->pRz[0]<<", "<<cparam->pRz[1]<<", "<<cparam->pRz[2]<<", "<<cparam->pRz[3]<<", "<<cparam->pRz[4]<<", "<<cparam->pRz[5]<<", "<<cparam->pRz[6]<<", "<<cparam->pRz[7]<<"\n";
+		fp << "#Processing parameters "<<"\n";
+		fp << "npoints x="<<cparam->nx<<"\n";
+		fp << "npoints y="<<cparam->ny<<"\n";
+		fp << "# Max values in direction cosines"<<"\n";
+		fp << "Max x="<<cparam->scalex/2<<"\n";
+		fp << "Max y="<<cparam->scaley/2<<"\n";
+		fp << "# Rot angle in degrees, offset in direction cosine"<<"\n";
+		fp << "Angle of rotation="<<cparam->rotangle *180/(3.1415926535897931)<<"\n";
+		fp << "Dcosy offset="<<cparam->offset<<"\n";
+		fp << "# range in kms"<<"\n";
+		fp << "proc range="<<cparam->fProcRange[0]<<","<<cparam->fProcRange[1]<<"\n";
+		fp << "beacon range="<<cparam->fBeaconRange[0]<<","<<cparam->fBeaconRange[1]<<"\n";
+		fp <<"end";
+		// fp <<"\n"<<"\n"<<"\n"<<"\n";
+		fp.close();
+		return 1;
+	}
+	else cout << "Unable to write file";
+		return 0;
+	
+}
 
 struct configParameters* readConfigFile(char* path, char* file){
 	struct configParameters *cparam;

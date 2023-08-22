@@ -52,7 +52,7 @@ struct configParameters{
   float fProcRange[2];
   float fBeaconRange[2];
 };
-
+int writeConfigFile(struct configParameters*, char* path, char* file);
 struct configParameters* readConfigFile(char* path, char* file);
 int wrHeaderFile(char* path, int year, int doy, int hour, int min, int sec, float h0, float dh, int nsamples, float ipp, int nx, int ny, float scalex, float scaley, float rotangle, float offset, float wavlength, int heiIndex[2], int nProfiles);
 int wrArray2File(char* path, char* file, float** array, int xDim, int yDim);

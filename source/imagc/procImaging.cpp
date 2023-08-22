@@ -268,7 +268,7 @@ void CprocImaging::procData(){
 		this->__showReadingInfo(pNoise, pInitialPhase, pPhase);
 
 		time(&startProcTime);
-		image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
+		image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n, 1);
 		time(&endProcTime);
 
 		//Saving HDF5 file

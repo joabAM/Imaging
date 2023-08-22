@@ -56,6 +56,7 @@ class CalibrateImag {
 
 		//Calibration
 		Ccalibration *calibrateObj;
+		
 
 		bool printFinalMsg;
 		char version[10];
@@ -68,6 +69,7 @@ class CalibrateImag {
 		void __showProcessingInfo(time_t, time_t, char*);
 		void __showProcessingInfo2(time_t, time_t, char*, float, float, float , float );
 		int __setupImagingObj(unsigned int *channels, unsigned int nChannels);
+		void __updateSpreadFunc(float offx, float offy);
 
 	public:
 		//**********Arguments****************
@@ -83,6 +85,7 @@ class CalibrateImag {
 
 		int nAvgFixed;
 //		float *pPhase;
+		float calibratedPhase;
 
 		CalibrateImag(int argc, char *argv[]);
 		~CalibrateImag();
@@ -94,8 +97,8 @@ class CalibrateImag {
 
 		void run();
 		void procData();
+		float calibrateChannels();
 		void procDataPSO();
-		void procDataPSO2();
 };
 
 CalibrateImag::~CalibrateImag(){
@@ -191,11 +194,22 @@ void CalibrateImag::run(){
 
 		if (sts==1)
 		{
-
+			
 			this->setConfigFile(thisYear, thisDoy);
+
+			if (pOptions->nx != -1) pFileOptions->nx = pOptions->nx;
+			if (pOptions->ny != -1) pFileOptions->ny = pOptions->ny;
+			if (pOptions->dx != -1) pFileOptions->scalex = pOptions->dx*2;
+			if (pOptions->dy != -1) pFileOptions->scaley = pOptions->dy*2;
+
 			this->__setupObjects(thisYear, thisDoy);
 			system("clear");
 			this->procData();
+			//***********************************************************
+			//***********************AUTO CALIBRATION********************
+		
+			//***********************************************************
+			//***********************************************************
 			// this->procDataPSO2();
 		}
 
@@ -215,6 +229,7 @@ void CalibrateImag::run(){
 	}
 
 	end_program(printFinalMsg);
+
 }
 
 void CalibrateImag::procData(){
@@ -291,16 +306,24 @@ void CalibrateImag::procData(){
 	}
 	pCurrentPhase[calibrateObj->channel] = curr_phase;
 
+	calibrateObj->filterPower = true;
+
+	// if (calibrateObj->channel==1)
+	// 	calibrateObj->filterPower = false;
+	
+	
+	
 	//Channel calibration loop
 	do{
 
 		//Phase correction
 		pdataUtilObj->fixPhase(pPhase);
 
-		this->__showReadingInfo(pNoise, pEstimatedPhase, pCurrentPhase, pBeaconPhase, beacoh);
+
+		if (pOptions->sh) this->__showReadingInfo(pNoise, pEstimatedPhase, pCurrentPhase, pBeaconPhase, beacoh);
 
 		time(&startProcTime);
-		image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
+		image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n, pOptions->sh);
 		time(&endProcTime);
 
 		//Saving HDF5 file
@@ -308,12 +331,12 @@ void CalibrateImag::procData(){
 
 		svArray2HDF5v2(ipath,iFile,image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
 
-		this->__showProcessingInfo(startProcTime, endProcTime, iFile);
+		if (pOptions->sh) this->__showProcessingInfo(startProcTime, endProcTime, iFile);
 
 		//EXIT IF KEY "q" IS PRESSED
 //			if(pressKey("q")) end_program(printFinalMsg);
 
-		calibrateObj->addPhasePower(curr_phase, image, n, m);
+		calibrateObj->addPhasePower(curr_phase, image, n, m, pOptions->sh);
 
 		/////////////////////////////////////////////////////
 		////Next iteration (next phase)
@@ -347,10 +370,151 @@ void CalibrateImag::procData(){
 
 	printf("\nPhase[%d] = %4.3f\n ", calibrateObj->channel, pEstimatedPhase[ calibrateObj->channel ]);
 
+	if (!pOptions->sh) {
+		char outConfigFile[100];
+		strcpy(outConfigFile, CONFIGFILE);
+		pFileOptions->pHydraPhase[ calibrateObj->channel] = pEstimatedPhase[ calibrateObj->channel];
+		writeConfigFile(pFileOptions, pOptions->config_path, outConfigFile);
+
+	}
+	
 	end_program(printFinalMsg);
 
 }
 
+float CalibrateImag::calibrateChannels(){
+
+	int fileStatus = 0;
+	char iFile[30];
+	float *pNoise, *pBeaconPhase;
+	float beacoh;
+
+	int m,n;
+	float **image;
+	float curr_phase, end_phase;
+	float pPhase[pdataUtilObj->nChannels], pEstimatedPhase[pdataUtilObj->nChannels], pCurrentPhase[pdataUtilObj->nChannels];
+
+	time_t startProcTime, endProcTime;
+
+
+	////////////////////////////////
+	////////////////////////////////
+	//Getting and averaging data
+	pdataUtilObj->cleanArrays();
+	for(int i=0; i<pOptions->navg; i++)
+	{
+		fileStatus = pdataReadObj->readNextBlock();
+		if(fileStatus == 0) break;
+
+		pdataUtilObj->avgData(pdataReadObj->pSelfSpect,
+							 pdataReadObj->pCrossSpect,
+							 pdataReadObj->pDcSpect,
+							 pdataReadObj->sHeader.ltime);
+	}
+
+	if(fileStatus == 0)	return 0.0;
+
+
+	this->__setupImagingObj(calibrateObj->channels, calibrateObj->nChannels);
+	system("clear");
+
+	////////////////////////////////
+	////////////////////////////////
+
+	pNoise = pdataUtilObj->getNoise();
+
+	pBeaconPhase = pdataUtilObj->getPhase(pFileOptions->fBeaconRange[0],pFileOptions->fBeaconRange[1], &beacoh);
+
+
+	////////////////////////////////
+	////////////////////////////////
+
+
+	for (UINT i=0; i<pdataUtilObj->nChannels; i++)
+		pPhase[i] = pFileOptions->pHydraPhase[i];
+
+
+	for (UINT i=0; i<pdataUtilObj->nChannels; i++){
+		//Initial phases
+		pEstimatedPhase[i] = pPhase[i];
+	}
+
+
+	this->__setNewImagingPath();
+
+	
+
+	pdataUtilObj->sec = 0;
+	pdataUtilObj->min = pdataReadObj->sHeader.min;
+	curr_phase = pPhase[ calibrateObj->channel ];
+	end_phase = curr_phase + calibrateObj->nphases*calibrateObj->phase_step;
+
+	//Updating values to estimated phases
+	for (UINT i=0; i<pdataUtilObj->nChannels; i++){
+		pCurrentPhase[i] = pEstimatedPhase[i];
+	}
+	pCurrentPhase[calibrateObj->channel] = curr_phase;
+
+	calibrateObj->filterPower = true;
+
+	//Channel calibration loop
+	do{
+
+		//Phase correction
+		pdataUtilObj->fixPhase(pPhase);
+
+
+		this->__showReadingInfo(pNoise, pEstimatedPhase, pCurrentPhase, pBeaconPhase, beacoh);
+
+		time(&startProcTime);
+		image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n,1);
+		time(&endProcTime);
+
+
+		this->__showProcessingInfo(startProcTime, endProcTime, iFile);
+
+		//EXIT IF KEY "q" IS PRESSED
+//			if(pressKey("q")) end_program(printFinalMsg);
+
+		calibrateObj->addPhasePower(curr_phase, image, n, m, 1);
+
+		/////////////////////////////////////////////////////
+		////Next iteration (next phase)
+
+		//Do not add phase to channels again
+		for (unsigned int i=0; i<calibrateObj->nChannels; i++)
+			pPhase[calibrateObj->channels[i]] = 0;
+
+		pPhase[ calibrateObj->channel ] = calibrateObj->phase_step;
+
+		pCurrentPhase[calibrateObj->channel] += calibrateObj->phase_step;
+
+		//Calibration mode
+		pdataUtilObj->sec ++;
+		if ( pdataUtilObj->sec > 59){
+			pdataUtilObj->min ++;
+			pdataUtilObj->sec = 0;
+		}
+
+		if ( pdataUtilObj->min > 59){
+			pdataUtilObj->hour ++;
+			pdataUtilObj->min = 0;
+		}
+
+		curr_phase += calibrateObj->phase_step;
+
+	}while(curr_phase <= end_phase);
+
+	//Setting channel phase to its right value
+	pEstimatedPhase[ calibrateObj->channel ] = calibrateObj->estimatePhase();
+
+	printf("\nPhase[%d] = %4.3f\n ", calibrateObj->channel, pEstimatedPhase[ calibrateObj->channel ]);
+
+	
+
+	return  pEstimatedPhase[calibrateObj->channel ];
+
+}
 
 void CalibrateImag::procDataPSO(){
 
@@ -448,7 +612,7 @@ void CalibrateImag::procDataPSO(){
 
 	// }
 	pdataUtilObj->fixPhase(pPhase);
-	image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
+	image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n,1);
 
 	// fg = calibrateObj->getOptFunction(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
 	// fg = 1000;
@@ -544,7 +708,7 @@ void CalibrateImag::procDataPSO(){
 
 			//get Image
 				
-			image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
+			image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n,1);
 				
 			//Saving HDF5 file
 			sprintf(iFile,"img%02d%02d%02d", _hour, _min, _sec);
@@ -603,249 +767,6 @@ void CalibrateImag::procDataPSO(){
 	end_program(printFinalMsg);
 
 }
-
-void CalibrateImag::procDataPSO2(){
-
-	int fileStatus = 0;
-	char iFile[30];
-
-	float *pNoise, *pBeaconPhase;
-	float beacoh;
-	float pPhase[pdataUtilObj->nChannels], pVelocity[pdataUtilObj->nChannels];
-	int m,n;
-	float **image;
-
-
-	time_t startProcTime, endProcTime;
-	int _sec, _min, _hour;
-	////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////
-	////  PSO variables
-	////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////
-	int population = 60;
-	int dimensions = calibrateObj->nChannels;
-	float X[population][dimensions]={0};  //particles
-	float bestP[population][dimensions]={0};
-	// float bestG[dimensions]={0, 0.75, -2.75, 1.74, 1.78, 1.45, 0.34, 0.66};
-	float bestG[dimensions]={0};
-	float bestFx[population]={-1000};
-	float bestFx2[population]={0};
-	float fg=-1000;
-	float fg2=-1000;
-	float fx=-1000;
-	float fx2=-1000;
-	float V[population][dimensions];  //velocities
-	float w;
-	float wmax =0.9;
-	float wmin = 0.1;
-
-	float xmax = 2*PI;
-	float xmin = 0 ;
-	float D = 2*PI;    // = xmax - xmin
-	float rp, rg;
-
-	float phiP=1; 	//personal factor
-	float phiG=1; 	//social factor
-
-	int nit=1;
-	int niters = 200;
-	////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////
-	//Getting and averaging data spc & cspc
-	pdataUtilObj->cleanArrays();
-	for(int i=0; i<pOptions->navg; i++)
-	{
-		fileStatus = pdataReadObj->readNextBlock();
-		if(fileStatus == 0) break;
-
-		pdataUtilObj->avgData(pdataReadObj->pSelfSpect,
-							 pdataReadObj->pCrossSpect,
-							 pdataReadObj->pDcSpect,
-							 pdataReadObj->sHeader.ltime);
-	}
-
-	if(fileStatus == 0)	return;
-
-	pNoise = pdataUtilObj->getNoise();
-	pBeaconPhase = pdataUtilObj->getPhase(pFileOptions->fBeaconRange[0],pFileOptions->fBeaconRange[1], &beacoh);
- 	////////////////////////////////////////////////////////////////
-	// prepare Imaging Object
-	////////////////////////////////////////////////////////////////
-	this->__setNewImagingPath();
-
-	this->__setupImagingObj(calibrateObj->channels, calibrateObj->nChannels);
-	
-	////////////////////////////////////////////////////////////////
-	// Set initial values for each particle and best personal position
-	////////////////////////////////////////////////////////////////
-	
-	for( int i=0; i<population; i++){
-		for(int d=1; d<dimensions; d++){
-			//random values between 0 and 2pi
-			X[i][d] =  static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/(2*PI)));
-			// X[i][d] = -PI + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/(2*PI)));
-		}
-	}
-
-	for( int i=0; i<population; i++){
-		for(int d=1; d<dimensions; d++){
-			bestP[i][d] = X[i][d];
-			//bestG[d] = X[i][d];
-			pPhase[d] = bestG[d];
-		}
-	}
-	pdataUtilObj->fixPhase(pPhase);
-	image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
-
-	fg = calibrateObj->getOptFunction(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
-	
-	// fg2 = calibrateObj->getSharpness(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny); 
-	fx = fg;
-	fx2 = fg2;
-	this->__showProcessingInfo2(0, 0, " ", fx, fg, fx2, fg2);
-	////////////////////////////////////////////////////////////////
-	// Set initial values for each particle velocity
-	////////////////////////////////////////////////////////////////
-	
-	for( int i=0; i<population; i++){
-		for(int d=1; d<dimensions; d++){
-			//random values between -2pi and 2pi
-			V[i][d] = -(PI) + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/(2*PI))); //-pi a pi
-			V[i][d] /= 10; //small initial velocities
-		}
-	}
-
-	////////////////////////////////////////////////////////////////
-	
-	int sts = system("clear");
-
-
-
-	_sec = 0;
-	_min = pdataReadObj->sHeader.min;
-	_hour = pdataUtilObj->hour;
-	
-	////////////////////////////////////////////////////////////////
-	//	PSO calibration loop
-	////////////////////////////////////////////////////////////////
-	time(&startProcTime);
-	do{
-		w = wmax - nit*(wmax - wmin)/niters;
-		for( int i=0; i<population; i++){
-			float _v, _x;
-			// rp = static_cast <float> (rand()) /( static_cast <float> (RAND_MAX));
-			// rg = 1 - rp;
-			for(int d=1; d<dimensions; d++){
-				rp = static_cast <float> (rand()) /( static_cast <float> (RAND_MAX));
-				// rg = static_cast <float> (rand()) /( static_cast <float> (RAND_MAX));
-				rg = 1 - rp;
-				float _d;
-				_v = w*V[i][d] + rp*phiP*( bestP[i][d] - X[i][d]) + rg*phiG*( bestG[d] - X[i][d]);
-
-				_x = X[i][d] + _v;
-				//Check Boundaries Li and Shi (2008)
-				//printf("particles : %2.2f, %2.2f, %2.2f\n",_v, _x, rp);
-
-				check_boundaries:
-                if (_x < xmin){
-					_d = (xmin - _x);
-                    _v = _d*_v/D;
-					// _v /= D;
-                    _x = xmax - _d; // Boundaries classic
-					//goto check_boundaries;
-				}
-                    
-                if (_x > xmax){
-					_d = (_x - xmax);
-                    _v = _d*_v/D;
-					// _v /= D;
-                    _x = xmin + _d; // Boundaries classic
-					//goto check_boundaries;
-				}
-				
-                //Update the particle's velocity
-                V[i][d] = _v;
-
-                //Update the particle's position (phase)
-                X[i][d] = _x;
-
-				//Change the phase
-				pPhase[d] = _x;
-
-				pVelocity[d] = _v;
-			}
-			
-			//set the phase according the current particle
-			pdataUtilObj->fixPhase(pPhase);
-
-			this->__showReadingInfo2(pNoise, bestG, pPhase, pVelocity, pBeaconPhase, beacoh, nit, i);
-
-			//get Image
-				
-			image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n);
-				
-			//Saving HDF5 file
-			sprintf(iFile,"img%02d%02d%02d", _hour, _min, _sec);
-			svArray2HDF5v2(ipath,iFile,image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
-
-			
-			//geting the cost functions
-			fx = calibrateObj->getOptFunction(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
-			// fx2 = calibrateObj->getSharpness(image, imagingObj->nfft, imagingObj->nHeis, imagingObj->nx, imagingObj->ny);
-
-			this->__showProcessingInfo2(startProcTime, endProcTime, iFile, fx, fg, fx2, fg2);
-			time(&endProcTime);
-			if ( fx > bestFx[i]) {
-			// if ( fx > bestFx[i] && fx2 > (0.9*bestFx2[i]) ){ //update the particle's best known dimension
-				bestFx[i] = fx;
-				bestFx2[i] = fx2;
-				for (UINT d=1; d<dimensions; d++){
-					bestP[i][d] = X[i][d];
-
-				}
-				if ( fx>fg){
-				// if ( fx>fg && fx2 > (0.9*fg2) ){  //update the swarm's best known dimensions
-					fg = fx;
-					fg2 = fx2;
-					for (UINT d=1; d<dimensions; d++){
-						bestG[d] = X[i][d];
-						//bestG[d] += X[i][d];
-						//bestG[d] /= 2;
-					}
-						
-				}
-					
-						
-			}
-			//not using time, just to be able to read the data later
-			_sec ++;
-			if ( _sec > 59){
-				_min ++;
-				_sec = 0;
-			}
-
-			if ( _min > 59){
-				_hour ++;
-				_min = 0;
-			}
-				
-		}
-
-		
-
-		nit++;
-
-	}while(nit <= niters);
-
-	for(UINT ch=0; ch < dimensions; ch++)
-		printf("\nPhase[%d] = %4.3f\n ", ch, bestG[ ch ]);
-
-	end_program(printFinalMsg);
-
-}
-
-
 
 
 int CalibrateImag::__setupObjects(UINT thisYear, UINT thisDoy){
@@ -974,6 +895,21 @@ int CalibrateImag::__setupImagingObj(unsigned int *channels, unsigned int nChann
 							 pFileOptions->wavelength);
 
 	return(1);
+}
+
+void CalibrateImag::__updateSpreadFunc(float offx, float offy){
+
+	imagingObj->getSpreadFunc2(pFileOptions->pRx,
+							 pFileOptions->pRy,
+							 pFileOptions->pRz,
+							 pFileOptions->scalex,
+							 pFileOptions->scaley,
+							 pFileOptions->rotangle,
+							 offx, 
+							 offy,
+							 pFileOptions->wavelength);
+
+
 }
 
 void CalibrateImag::__setNewImagingPath(){

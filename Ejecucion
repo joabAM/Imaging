@@ -54,11 +54,11 @@ genImagPlots.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --ppath=/home
 
 
 
-calibrateImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --start-min=30 --end-hour=24 --channels=0,1,2 --min-hei=200 --max-hei=400 --config-file=calibration.txt
+calibrateImaging --dpath=/mnt/DATA/pdata --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --start-min=30 --end-hour=24 --channels=0,1,2 --min-hei=200 --max-hei=400 --config-file=calibration.txt
 
-genImagCuts.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=21  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
+genImagCuts.py --dpath=/mnt/DATA/imaging/h5data  --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=21  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
 
-genImagPlots.py --dpath=/home/japaza/Data/imaging/h5data  --ppath=/home/japaza/Data/imaging/h5data  --start-year=2018 --start-doy=7 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1 --min-dcosy=-0.1 --max-dcosy=0.1
+genImagPlots.py --dpath=/mnt/DATA/imaging/h5data  --ppath=/mnt/DATA/imaging/h5data  --start-year=2018 --start-doy=252 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=1 --min-dcosy=-0.1 --max-dcosy=0.1
 
 procImaging --dpath=/home/japaza/Data/pdata --ppath=/home/japaza/Data/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --navg=10  --config-file=calibration.txt --procKey=45
 
