@@ -97,7 +97,6 @@ class CalibrateImag {
 
 		void run();
 		void procData();
-		float calibrateChannels();
 		void procDataPSO();
 };
 
@@ -378,143 +377,15 @@ void CalibrateImag::procData(){
 
 	}
 	
+	printf("\n\n\nphase beacon=");
+	for(int k=0; k<pdataUtilObj->nChannels;k++){
+		printf("%2.2f ,",pBeaconPhase[k] );
+	}
+	printf("\n");
 	end_program(printFinalMsg);
 
 }
 
-float CalibrateImag::calibrateChannels(){
-
-	int fileStatus = 0;
-	char iFile[30];
-	float *pNoise, *pBeaconPhase;
-	float beacoh;
-
-	int m,n;
-	float **image;
-	float curr_phase, end_phase;
-	float pPhase[pdataUtilObj->nChannels], pEstimatedPhase[pdataUtilObj->nChannels], pCurrentPhase[pdataUtilObj->nChannels];
-
-	time_t startProcTime, endProcTime;
-
-
-	////////////////////////////////
-	////////////////////////////////
-	//Getting and averaging data
-	pdataUtilObj->cleanArrays();
-	for(int i=0; i<pOptions->navg; i++)
-	{
-		fileStatus = pdataReadObj->readNextBlock();
-		if(fileStatus == 0) break;
-
-		pdataUtilObj->avgData(pdataReadObj->pSelfSpect,
-							 pdataReadObj->pCrossSpect,
-							 pdataReadObj->pDcSpect,
-							 pdataReadObj->sHeader.ltime);
-	}
-
-	if(fileStatus == 0)	return 0.0;
-
-
-	this->__setupImagingObj(calibrateObj->channels, calibrateObj->nChannels);
-	system("clear");
-
-	////////////////////////////////
-	////////////////////////////////
-
-	pNoise = pdataUtilObj->getNoise();
-
-	pBeaconPhase = pdataUtilObj->getPhase(pFileOptions->fBeaconRange[0],pFileOptions->fBeaconRange[1], &beacoh);
-
-
-	////////////////////////////////
-	////////////////////////////////
-
-
-	for (UINT i=0; i<pdataUtilObj->nChannels; i++)
-		pPhase[i] = pFileOptions->pHydraPhase[i];
-
-
-	for (UINT i=0; i<pdataUtilObj->nChannels; i++){
-		//Initial phases
-		pEstimatedPhase[i] = pPhase[i];
-	}
-
-
-	this->__setNewImagingPath();
-
-	
-
-	pdataUtilObj->sec = 0;
-	pdataUtilObj->min = pdataReadObj->sHeader.min;
-	curr_phase = pPhase[ calibrateObj->channel ];
-	end_phase = curr_phase + calibrateObj->nphases*calibrateObj->phase_step;
-
-	//Updating values to estimated phases
-	for (UINT i=0; i<pdataUtilObj->nChannels; i++){
-		pCurrentPhase[i] = pEstimatedPhase[i];
-	}
-	pCurrentPhase[calibrateObj->channel] = curr_phase;
-
-	calibrateObj->filterPower = true;
-
-	//Channel calibration loop
-	do{
-
-		//Phase correction
-		pdataUtilObj->fixPhase(pPhase);
-
-
-		this->__showReadingInfo(pNoise, pEstimatedPhase, pCurrentPhase, pBeaconPhase, beacoh);
-
-		time(&startProcTime);
-		image = imagingObj->getImaging(pdataUtilObj->pSelfSpect, pdataUtilObj->pCrossSpect, pNoise, pOptions->snr_th, nAvgFixed, &m, &n,1);
-		time(&endProcTime);
-
-
-		this->__showProcessingInfo(startProcTime, endProcTime, iFile);
-
-		//EXIT IF KEY "q" IS PRESSED
-//			if(pressKey("q")) end_program(printFinalMsg);
-
-		calibrateObj->addPhasePower(curr_phase, image, n, m, 1);
-
-		/////////////////////////////////////////////////////
-		////Next iteration (next phase)
-
-		//Do not add phase to channels again
-		for (unsigned int i=0; i<calibrateObj->nChannels; i++)
-			pPhase[calibrateObj->channels[i]] = 0;
-
-		pPhase[ calibrateObj->channel ] = calibrateObj->phase_step;
-
-		pCurrentPhase[calibrateObj->channel] += calibrateObj->phase_step;
-
-		//Calibration mode
-		pdataUtilObj->sec ++;
-		if ( pdataUtilObj->sec > 59){
-			pdataUtilObj->min ++;
-			pdataUtilObj->sec = 0;
-		}
-
-		if ( pdataUtilObj->min > 59){
-			pdataUtilObj->hour ++;
-			pdataUtilObj->min = 0;
-		}
-
-		curr_phase += calibrateObj->phase_step;
-
-	}while(curr_phase <= end_phase);
-
-	//Setting channel phase to its right value
-	pEstimatedPhase[ calibrateObj->channel ] = calibrateObj->estimatePhase();
-
-	printf("\nPhase[%d] = %4.3f\n ", calibrateObj->channel, pEstimatedPhase[ calibrateObj->channel ]);
-
-	
-
-	return  pEstimatedPhase[calibrateObj->channel ];
-
-}
 
 void CalibrateImag::procDataPSO(){
 

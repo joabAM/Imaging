@@ -51,8 +51,8 @@ sudo apt -y install libgtk2.0-dev libtbb-dev qt5-default libatlas-base-dev libfa
 sudo apt -y install libgphoto2-dev libeigen3-dev libhdf5-dev doxygen
 
 
-sudo apt -y install libopencv-dev python3-opencv
-## pip2 install opencv-python==4.2.0.32
+sudo apt -y install libopencv-dev python3-opencv # no necesario
+## pip2 install opencv-python==4.2.0.32  # no necesario
 
 #############################################################################################
 #############################################################################################

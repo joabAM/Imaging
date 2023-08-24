@@ -508,33 +508,7 @@ void Ccalibration::meanFilter(float src[],float dst[], int windowsize, int N) {
 
 }
 
-//nx = alturas
-//ny = this->nx * this->ny
-// void Ccalibration::addPhasePower2(float phase, float **image, int nx, int ny, int nFFTPoints, int nHeis) {
-// 	// TODO Auto-generated constructor stub
-// 	//
-// 	// printf("\npoints nx = %d\n",nx);
-// 	// printf("\npoints ny = %d\n",ny);
-// 	if (!this->initialized)
-// 		return;
 
-// 	this->phaseList[this->power_len] = phase;
-// 	this->powerList[this->power_len] = this->__getPower(image,nx,ny);
-// 	// this->powerList[this->power_len] = this->getOptFunction(image, nFFTPoints, nHeis, nx, ny);
-
-// 	this->desvList[this->power_len] = this->__getDesv(image,nx,ny);
-
-//  	// 128   a   8   ->  1024=ny; 
-// 	for(UINT i=0; i< this->ny; i++){
-// 		//printf("\nindex = %d  %d \n",this->power_len, i);
-// 		//dispMatrix[this->power_len][i] = 1.0;
-// 		dispMatrix[this->power_len][i] = this->getDispIndx(image,nx,this->nx,i);
-// 	}
-
-// 	printf("\nphase nro = %d\n",	this->power_len);
-// 	this->power_len += 1;
-
-// }
 
 void Ccalibration::addPhasePower(float phase, float **image, int nx, int ny, bool show) {
 	// TODO Auto-generated constructor stub
@@ -574,7 +548,7 @@ int Ccalibration::getPhaseIndex(int filterPoints){
 	index_min = getMinIndex(this->powerList, this->power_len);
 	index_max = getMaxIndex(this->powerList, this->power_len);
 
-	// limitOutliers(norm_desv, this->power_len); //solo 4 a mas
+	// limitOutliers(norm_desv, this->power_len); //solo 
 
 	for (int i=0; i<this->power_len; i++)
 		norm_power[i] = (this->powerList[i] - this->powerList[index_min])/(this->powerList[index_max] - this->powerList[index_min]);
@@ -631,7 +605,7 @@ float Ccalibration::estimatePhase(){
 	if (this->power_len>600) factor=10;
 
 	if (this->channel<4)
-		filterPoints=5*factor;
+		filterPoints=11*factor;
 	else if( this->channel<7) 
 		filterPoints=15*factor;
 	else 
