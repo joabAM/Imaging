@@ -7,12 +7,13 @@ source/build/
 source/dist/
 source/imagpy.egg-info
 source/imagf/lapack/lapack-3.3.0/
-include/*.h
+#include/*.h
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
+*.pyc
 
 # Precompiled Headers
 *.gch

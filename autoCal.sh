@@ -1,7 +1,10 @@
 #!/bin/bash
-#Script to process multiple days for Imaging experiment, config-file is necessary
+#Script to calibrate the phases for JULIA-Imaging experiment, config-file is necessary
 #please kill all existing processes related to Imaging before running this script
 #You need to stablish the pdata location, ensure the DOY folder had the right format
+#>> ./autoCal.sh
+
+
 PATHDATA="/mnt/DATA/pdata"
 #PATHDATA="/media/soporte/DATA/ISR"
 PATHOUT="/mnt/DATA/imaging/h5data"

@@ -365,9 +365,11 @@ def plot_colormap(nplots, xmin, xmax, ymin, ymax,
 
     subplot(1, 1, 1)
 
-    ypage_min = 0.155
-    ypage_max = 0.265
-
+    # ypage_min = 0.155
+    # ypage_max = 0.265
+    xwidth = 0.06
+    ypage_min = 0.779
+    ypage_max = 0.889
     #SNR MAP
     if nplots == 1:
         xpage_min = 0.13
@@ -377,10 +379,11 @@ def plot_colormap(nplots, xmin, xmax, ymin, ymax,
             ypage_max = 0.869
             xpage_min = 0.188
             xpage_max = 0.258
-#0.08 0.045
+
     if nplots == 2:
-        xpage_min = 0.37
-        xpage_max = 0.43
+        xpage_min = 0.81
+        xpage_max = xpage_min + xwidth
+        
 
     axis(xmin, xmax, ymin, ymax, szchar=szchar/1.1,
         xpage_min=xpage_min, xpage_max=xpage_max,
@@ -403,8 +406,8 @@ def plot_colormap(nplots, xmin, xmax, ymin, ymax,
             xpage_min = 0.315
             xpage_max = 0.385
     if nplots == 2:
-        xpage_min = 0.47
-        xpage_max = 0.53
+        xpage_min = 0.91
+        xpage_max = xpage_min + xwidth
 
     axis(xmin, xmax, 0, (xmax - xmin), szchar=szchar/1.1,
                xpage_min=xpage_min, xpage_max=xpage_max,
