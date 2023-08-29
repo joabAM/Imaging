@@ -258,7 +258,7 @@ void CprocImaging::procData(){
 
 		pBeaconPhase = pdataUtilObj->getPhase(pFileOptions->fBeaconRange[0],pFileOptions->fBeaconRange[1], &beacoh);
 
-		if (beacoh>0.4)
+		if (beacoh>0.4 & beacoh<=1.0 & !pOptions->ignBeacon)
 			for(UINT i=0;i<pdataUtilObj->nChannels;i++)
 				pPhase[i] = pFileOptions->pDeltaPhase[i] + pBeaconPhase[i];
 

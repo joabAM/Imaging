@@ -54,13 +54,13 @@ genImagPlots.py --dpath=/home/soporte/Documentos/Imaging/OUTPUTmp4 --ppath=/home
 
 
 
-calibrateImaging --dpath=/mnt/DATA/pdata --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --start-min=30 --end-hour=24 --channels=0,1,2 --min-hei=200 --max-hei=400 --config-file=calibration.txt
+calibrateImaging --dpath=/mnt/DATA/pdata --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --start-min=30 --end-hour=24 --channels=0,2 --min-hei=200 --max-hei=400 --navg=5 --config-file=calibration.txt
 
-genImagCuts.py --dpath=/mnt/DATA/imaging/h5data  --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=21  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
+genImagCuts.py --dpath=/mnt/DATA/imaging/h5data  --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=24  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-dcosy 
 
-genImagPlots.py --dpath=/mnt/DATA/imaging/h5data  --ppath=/mnt/DATA/imaging/h5data  --start-year=2018 --start-doy=19 --start-hour=18 --end-hour=29 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=0 --min-dcosy=-0.1 --max-dcosy=0.1
+genImagPlots.py --dpath=/mnt/DATA/imaging/h5data  --ppath=/mnt/DATA/imaging/h5data  --start-year=2018 --start-doy=7 --start-hour=18 --end-hour=31 --nbins=8 --min-hei=100 --max-hei=750  --save=1 --filter --fft-shift --std-plot=0 --min-dcosx=-0.2 --max-dcosx=0.2
 
-procImaging --dpath=/mnt/DATA/pdata --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=19 --start-hour=21  --navg=1  --config-file=calibration.txt --procKey=45
+procImaging --dpath=/mnt/DATA/pdata --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=21  --navg=5  --config-file=calibration.txt --procKey=45 --ignoreBeacon=1
 
 
 genImagCuts.py --dpath=/mnt/DATA/imaging/h5data  --ppath=/mnt/DATA/imaging/h5data --start-year=2018 --start-doy=7 --start-hour=20 --end-hour=24  --maxdB=35 --min-hei=200 --max-hei=400  --show=1 --fft-shift  --save=1  --plot-rcut

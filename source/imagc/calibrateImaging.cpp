@@ -379,7 +379,10 @@ void CalibrateImag::procData(){
 	
 	printf("\n\n\nphase beacon=");
 	for(int k=0; k<pdataUtilObj->nChannels;k++){
-		printf("%2.2f ,",pBeaconPhase[k] );
+		if (beacoh>0.75)
+			printf("%2.2f ,",pBeaconPhase[k] );
+		else
+			printf("%2.2f ,",0.0 );
 	}
 	printf("\n");
 	end_program(printFinalMsg);

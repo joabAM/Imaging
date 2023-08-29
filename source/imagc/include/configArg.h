@@ -56,6 +56,7 @@ struct options{
 	int proc_key;
 	int nx, ny;
 	int sh;
+	int ignBeacon;
 	float dx, dy;
 	//DATE HEADER
 	char dpath[100];

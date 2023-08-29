@@ -859,6 +859,7 @@ options* getArgs3(int argc, char *argv[]){
 	sprintf(opt->dpath,"NON ARGUMENT");
 	sprintf(opt->ppath,"NON ARGUMENT");
 	opt->proc_key = 191;
+	opt->ignBeacon = 0;
 	opt->nx = -1;
 	opt->ny = -1;
 	opt->sh = 1;
@@ -942,6 +943,7 @@ options* getArgs3(int argc, char *argv[]){
 			{"dcosxM", required_argument, 0,'dx'},
 			{"dcosyM", required_argument, 0,'dy'},
 			{"showProcess", required_argument, 0,'sh'},
+			{"ignoreBeacon", required_argument, 0,'ib'},
             {0, 0, 0, 0}
           };
         //* getopt_long stores the option index here.
@@ -1091,6 +1093,9 @@ options* getArgs3(int argc, char *argv[]){
 			break;
 		case 'sh':
 			opt->sh = atoi(optarg);
+			break;
+		case 'ib':
+			opt->ignBeacon = atoi(optarg);
 			break;
     	case '?':
     		//* getopt_long already printed an error message.
